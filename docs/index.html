@@ -392,13 +392,18 @@ async function ensureMonths(keys, force = false) {
   await Promise.all(need.map(async (k) => {
     const [from, to] = monthRange(k);
     const res = await api.list(from, to);
-    S.months[k] = res.entries || [];
+    S.months[k] = (res.entries || []).map(normEntry);
     if (res.config) {
       const extra = (res.config.reasons || []).filter((r) => !DEFAULT_REASONS.some((d) => d.name === r.name));
       S.reasons = DEFAULT_REASONS.concat(extra);
       if (res.config.total) S.total = Number(res.config.total);
     }
   }));
+}
+// 구글 시트가 '08:30' → '8:30' 처럼 바꿔 돌려주는 경우가 있어 정규화
+const normTime = (t) => { const m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? `${pad(Number(m[1]))}:${m[2]}` : ''; };
+function normEntry(e) {
+  return { ...e, date: String(e.date).slice(0, 10), name: String(e.name), start: normTime(e.start), end: normTime(e.end) };
 }
 const entriesOn = (date) => (S.months[monthKey(date)] || []).filter((e) => e.date === date);
 function entriesBetween(from, to) {

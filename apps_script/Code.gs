@@ -86,6 +86,10 @@ function entriesSheet() {
 }
 
 function cellStr(v, kind) {
+  if (kind === 'time' && typeof v === 'string') {
+    const m = v.match(/^(\d{1,2}):(\d{2})/);
+    return m ? ('0' + m[1]).slice(-2) + ':' + m[2] : v;
+  }
   if (v instanceof Date) {
     const tz = Session.getScriptTimeZone();
     return Utilities.formatDate(v, tz, kind === 'time' ? 'HH:mm' : 'yyyy-MM-dd');
@@ -124,7 +128,8 @@ function validateEntry(x) {
 function upsert(x) {
   validateEntry(x);
   const sh = entriesSheet();
-  const row = [x.date, x.name, x.status, x.reason || '', x.start || '', x.end || '', new Date().toISOString()];
+  // 앞에 ' 를 붙여 시트가 날짜/시간으로 자동 변환하지 않게 텍스트로 저장
+  const row = ["'" + x.date, x.name, x.status, x.reason || '', x.start ? "'" + x.start : '', x.end ? "'" + x.end : '', new Date().toISOString()];
   const hit = readAll(sh).find(function (e) { return e.date === x.date && e.name === x.name; });
   if (hit) sh.getRange(hit.row, 1, 1, row.length).setValues([row]);
   else sh.appendRow(row);
