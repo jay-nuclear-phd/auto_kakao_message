@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2a78d6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'%3E3%3C/text%3E%3C/svg%3E">
 <title>3반 결강 현황</title>
 <style>
 :root {
@@ -57,22 +58,26 @@ button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .top {
   position: sticky; top: 0; z-index: 5;
   background: var(--bg); padding: 12px 16px 8px;
-  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
 .top h1 { font-size: 18px; margin: 0; }
+.badges { display: flex; gap: 6px; }
 .badge { font-size: 12px; color: var(--text-secondary); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+button.badge { color: var(--accent); font-weight: 600; }
 main { max-width: 560px; margin: 0 auto; padding: 0 12px; display: grid; gap: 12px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-width: 0; }
 .card h2 { font-size: 16px; margin: 0 0 12px; }
+fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
+fieldset.plain:disabled { opacity: .45; }
 .field { display: grid; gap: 6px; margin-top: 16px; }
 .field > .label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-input[type=text], input[type=number], select {
+input[type=text], input[type=password], input[type=number], select {
   width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px;
   border: 1px solid var(--line); background: var(--surface-1); font-size: 16px;
 }
 input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .row { display: flex; gap: 8px; align-items: stretch; }
-.row > select, .row > input { flex: 1; }
+.row > select, .row > input { flex: 1; min-width: 0; }
 
 .datenav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .navbtn { width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-1); font-size: 24px; line-height: 1; flex: none; }
@@ -80,6 +85,9 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accen
 .datelabel .main { font-size: 20px; font-weight: 700; }
 .datelabel .sub { font-size: 13px; color: var(--text-secondary); }
 .datelabel .sub button { border: 0; background: none; color: var(--accent); padding: 0 0 0 4px; font-size: 13px; text-decoration: underline; }
+
+.lockbox { margin-top: 16px; padding: 12px; border-radius: 12px; background: var(--accent-soft); display: grid; gap: 8px; }
+.lockbox p { margin: 0; font-size: 14px; }
 
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--track); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg button { min-height: 44px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; color: var(--text-secondary); }
@@ -89,18 +97,18 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accen
 
 .ghost { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-1); font-weight: 600; white-space: nowrap; }
 .primary { width: 100%; min-height: 52px; border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 17px; font-weight: 700; }
-.primary:disabled { opacity: .5; }
+.primary:disabled, .ghost:disabled { opacity: .45; }
 .danger { color: var(--danger); }
 .actions { display: grid; gap: 8px; margin-top: 20px; }
 .hint { font-size: 13px; color: var(--text-secondary); }
 .subform { display: grid; gap: 8px; margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--accent-soft); }
 
 .presets { display: flex; gap: 6px; flex-wrap: wrap; }
-.presets button { min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); font-size: 14px; }
+.presets button { min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); font-size: 14px; font-variant-numeric: tabular-nums; }
+.presets button.clear { color: var(--text-secondary); }
 .blocks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; }
 .blk { min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-1); font-size: 14px; font-variant-numeric: tabular-nums; padding: 0; }
 .blk.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
-.blk.anchor { box-shadow: inset 0 0 0 3px var(--accent-soft); }
 .timetext { font-size: 15px; font-weight: 700; }
 
 .toast { min-height: 20px; font-size: 14px; font-weight: 600; color: var(--good); text-align: center; }
@@ -123,25 +131,35 @@ pre.msg {
 
 /* 일간 타임라인 */
 .tl { display: grid; gap: 10px; margin-top: 12px; }
-.tlrow { display: grid; grid-template-columns: 92px 1fr 40px; gap: 8px; align-items: center; }
+.tlrow { display: grid; grid-template-columns: 76px 1fr 40px; gap: 8px; align-items: center; }
 .tlname { font-size: 13px; line-height: 1.25; overflow: hidden; }
 .tlname small { display: block; color: var(--text-secondary); font-size: 11px; }
 .tltrack { position: relative; height: 24px; background: var(--track); border-radius: 6px; }
 .tlseg { position: absolute; top: 0; bottom: 0; border-radius: 6px; }
 .tlh { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
-.tlaxis { display: grid; grid-template-columns: 92px 1fr 40px; gap: 8px; font-size: 11px; color: var(--text-muted); }
+.tlaxis { display: grid; grid-template-columns: 76px 1fr 40px; gap: 8px; font-size: 11px; color: var(--text-muted); }
 .tlaxis .ticks { position: relative; height: 14px; }
 .tlaxis .ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 
-/* 주/월 히트맵 */
+/* 주간 히트맵 */
 .hmwrap { overflow-x: auto; margin-top: 12px; -webkit-overflow-scrolling: touch; }
 table.hm { border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
 table.hm th { font-weight: 600; color: var(--text-secondary); padding: 2px; }
 table.hm th.nm, table.hm td.nm { position: sticky; left: 0; background: var(--card); text-align: left; white-space: nowrap; padding-right: 6px; z-index: 1; font-weight: 500; color: var(--text-primary); }
 table.hm td.c { width: 40px; min-width: 40px; height: 32px; text-align: center; border-radius: 4px; background: var(--track); padding: 0; }
-table.hm.month td.c { width: 26px; min-width: 26px; height: 28px; font-size: 11px; }
 table.hm td.tot { padding: 0 4px 0 6px; text-align: right; font-weight: 700; white-space: nowrap; }
 table.hm td.c[data-tip] { cursor: pointer; }
+
+/* 월간 달력 */
+.cal { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 12px; }
+.cal .dow { text-align: center; font-size: 12px; font-weight: 600; color: var(--text-secondary); padding-bottom: 2px; }
+.cal .day { min-height: 88px; border: 1px solid var(--line); border-radius: 8px; padding: 4px; background: var(--surface-1); display: flex; flex-direction: column; gap: 2px; text-align: left; min-width: 0; }
+.cal .day.out { visibility: hidden; }
+.cal .day.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cal .dn { font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; }
+.cal .dn .cnt { font-weight: 600; color: var(--text-secondary); font-size: 11px; }
+.cal .chip { font-size: 10px; line-height: 1.35; border-radius: 4px; padding: 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal .more { font-size: 10px; color: var(--text-secondary); }
 
 .tip { position: fixed; z-index: 20; max-width: 260px; background: var(--text-primary); color: var(--card); font-size: 13px; padding: 8px 10px; border-radius: 8px; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,.25); white-space: pre-line; }
 [hidden] { display: none !important; }
@@ -150,7 +168,10 @@ table.hm td.c[data-tip] { cursor: pointer; }
 <body>
 <header class="top">
   <h1>26-3기 3반 결강 현황</h1>
-  <span class="badge" id="modeBadge"></span>
+  <div class="badges">
+    <button type="button" class="badge" id="adminBadge" hidden>관리자 · 로그아웃</button>
+    <span class="badge" id="modeBadge"></span>
+  </div>
 </header>
 
 <main>
@@ -165,47 +186,58 @@ table.hm td.c[data-tip] { cursor: pointer; }
       <button class="navbtn" id="nextDay" aria-label="다음 날짜">›</button>
     </div>
 
-    <label class="field">
-      <span class="label">이름</span>
-      <input type="text" id="name" placeholder="예: 소령 홍길동" list="nameList" autocomplete="off" enterkeyhint="done">
-    </label>
-    <datalist id="nameList"></datalist>
-
-    <div class="field">
-      <span class="label">결강 여부</span>
-      <div class="seg" id="statusSeg" role="radiogroup" aria-label="결강 여부">
-        <button type="button" data-status="none" aria-pressed="false">결강 없음</button>
-        <button type="button" data-status="absent" aria-pressed="false">결강</button>
-      </div>
+    <div class="lockbox" id="lockBox" hidden>
+      <p>🔒 지금 조사 중인 날짜가 아니에요. 다른 날짜를 입력하거나 수정하려면 관리자 로그인이 필요해요.</p>
+      <form id="loginForm" class="row" style="flex-wrap:wrap" autocomplete="on">
+        <input type="text" id="adminId" placeholder="아이디" autocomplete="username" autocapitalize="off" style="flex:1 1 120px">
+        <input type="password" id="adminPw" placeholder="비밀번호" autocomplete="current-password" style="flex:1 1 120px">
+        <button type="submit" class="ghost" id="loginBtn" style="flex:1 1 100%">관리자 로그인</button>
+      </form>
     </div>
 
-    <div id="absentFields" hidden>
+    <fieldset class="plain" id="formFields">
+      <label class="field">
+        <span class="label">이름</span>
+        <input type="text" id="name" placeholder="예: 소령 홍길동" list="nameList" autocomplete="off" enterkeyhint="done">
+      </label>
+      <datalist id="nameList"></datalist>
+
       <div class="field">
-        <span class="label">사유</span>
-        <div class="row">
-          <select id="reason" aria-label="결강 사유"></select>
-          <button type="button" class="ghost" id="addReasonBtn">+ 추가</button>
+        <span class="label">결강 여부</span>
+        <div class="seg" id="statusSeg" role="radiogroup" aria-label="결강 여부">
+          <button type="button" data-status="none" aria-pressed="false">결강 없음</button>
+          <button type="button" data-status="absent" aria-pressed="false">결강</button>
         </div>
-        <div class="subform" id="addReasonForm" hidden>
-          <input type="text" id="newReason" placeholder="새 사유 (예: 병가)">
-          <div class="seg small" id="reasonTypeSeg">
-            <button type="button" data-rtype="leave" aria-pressed="true">휴가 (출근에서 제외)</button>
-            <button type="button" data-rtype="time" aria-pressed="false">시간 사용 (출근 유지)</button>
-          </div>
+      </div>
+
+      <div id="absentFields" hidden>
+        <div class="field">
+          <span class="label">사유</span>
           <div class="row">
-            <button type="button" class="ghost" id="cancelReason" style="flex:1">취소</button>
-            <button type="button" class="ghost" id="saveReason" style="flex:1;color:var(--accent)">추가하기</button>
+            <select id="reason" aria-label="결강 사유"></select>
+            <button type="button" class="ghost" id="addReasonBtn">+ 추가</button>
+          </div>
+          <div class="subform" id="addReasonForm" hidden>
+            <input type="text" id="newReason" placeholder="새 사유 (예: 병가)">
+            <div class="seg small" id="reasonTypeSeg">
+              <button type="button" data-rtype="leave" aria-pressed="true">휴가 (출근에서 제외)</button>
+              <button type="button" data-rtype="time" aria-pressed="false">시간 사용 (출근 유지)</button>
+            </div>
+            <div class="row">
+              <button type="button" class="ghost" id="cancelReason" style="flex:1">취소</button>
+              <button type="button" class="ghost" id="saveReason" style="flex:1;color:var(--accent)">추가하기</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="field">
-        <span class="label">결강 시간 <span class="hint" style="font-weight:400">— 시작 칸과 끝 칸을 차례로 누르세요</span></span>
-        <div class="presets" id="presets"></div>
-        <div class="blocks" id="blocks"></div>
-        <div class="timetext" id="timeText"></div>
+        <div class="field">
+          <span class="label">결강 시간 <span class="hint" style="font-weight:400">— 쓰는 30분 칸을 눌러 선택 (다시 누르면 해제)</span></span>
+          <div class="presets" id="presets"></div>
+          <div class="blocks" id="blocks"></div>
+          <div class="timetext" id="timeText"></div>
+        </div>
       </div>
-    </div>
+    </fieldset>
 
     <div class="field"><div class="hint" id="formState"></div></div>
     <div class="actions">
@@ -226,7 +258,8 @@ table.hm td.c[data-tip] { cursor: pointer; }
     <pre class="msg" id="msg"></pre>
     <button type="button" class="primary" id="copyBtn">복사하기</button>
     <div class="toast" id="copyToast" role="status" aria-live="polite"></div>
-    <div class="hint">총원 <button type="button" class="linkbtn" id="totalBtn"></button>
+    <div class="hint">총원 <span id="totalText"></span>
+      <button type="button" class="linkbtn" id="totalBtn" hidden>수정</button>
       <span id="totalEdit" hidden> <input type="number" id="totalInput" min="1" max="200" style="width:90px;min-height:36px;display:inline-block"> <button type="button" class="linkbtn" id="totalSave">저장</button></span>
     </div>
   </section>
@@ -266,10 +299,12 @@ const DEFAULT_REASONS = [
   { name: '청원휴가', type: 'leave' },
   { name: '자녀돌봄', type: 'time' },
 ];
-// 보고 문구에 항상(0명이어도) 나오는 시간 사용 항목
-const FIXED_TIME_ITEMS = ['육아시간', '모성보호시간'];
+// 초안 문구에는 0명이어도 나오는 항목. 그 밖의 항목은 1명 이상일 때만 나온다.
+const DRAFT_ALWAYS = ['육아시간'];
+// 시간 사용 항목의 문구 순서 (나머지는 이름순)
+const ITEM_ORDER = ['육아시간', '모성보호시간', '자녀돌봄'];
 const DAY_START = 8 * 60, DAY_END = 17 * 60 + 30, SLOT = 30;
-const NSLOTS = (DAY_END - DAY_START) / SLOT; // 19
+const NSLOTS = (DAY_END - DAY_START) / SLOT; // 19칸: 08:00 ~ 17:00 시작
 const RANKS = '소위|중위|대위|소령|중령|대령|준장|준위|원사|상사|중사|하사|군무원';
 const BINS = [
   { max: 1, label: '1시간 이하' },
@@ -293,11 +328,39 @@ const reportDate = (s) => { const d = parseYmd(s); return `'${String(d.getFullYe
 const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const fromMin = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
 const slotStart = (i) => DAY_START + i * SLOT;
-const hoursOf = (e) => (e.status === 'absent' && e.start && e.end) ? (toMin(e.end) - toMin(e.start)) / 60 : 0;
 const fmtH = (h) => (Math.round(h * 10) / 10).toString();
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const binOf = (h) => h <= 0 ? -1 : BINS.findIndex((b) => h <= b.max);
 const todayStr = () => ymd(new Date());
+const shortName = (n) => n.replace(new RegExp(`^(${RANKS})\\s`), '');
+
+// 시간 표현: "08:00~08:30,15:30~17:30"
+const normTime = (t) => { const m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? `${pad(Number(m[1]))}:${m[2]}` : ''; };
+function parseRanges(times) {
+  return String(times || '').split(',').map((r) => r.split('~').map(normTime)).filter(([a, b]) => a && b && a < b);
+}
+const normTimes = (times) => parseRanges(times).map(([a, b]) => `${a}~${b}`).join(',');
+const dispTimes = (times) => parseRanges(times).map(([a, b]) => `${a}~${b}`).join(', ');
+const hoursOf = (e) => e.status === 'absent' ? parseRanges(e.times).reduce((h, [a, b]) => h + (toMin(b) - toMin(a)) / 60, 0) : 0;
+function slotsToTimes(slots) {
+  const idx = [...slots].sort((a, b) => a - b);
+  const out = [];
+  for (const i of idx) {
+    const last = out[out.length - 1];
+    if (last && last[1] === i - 1) last[1] = i; else out.push([i, i]);
+  }
+  return out.map(([s, e]) => `${fromMin(slotStart(s))}~${fromMin(slotStart(e + 1))}`).join(',');
+}
+function timesToSlots(times) {
+  const set = new Set();
+  for (const [a, b] of parseRanges(times)) {
+    for (let m = toMin(a); m < toMin(b); m += SLOT) {
+      const i = (m - DAY_START) / SLOT;
+      if (Number.isInteger(i) && i >= 0 && i < NSLOTS) set.add(i);
+    }
+  }
+  return set;
+}
 
 function normName(raw) {
   let s = (raw || '').trim().replace(/\s+/g, ' ');
@@ -314,8 +377,9 @@ function defaultTarget(now = new Date()) {
   return t;
 }
 const store = {
-  get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  get(k, def, ss) { try { const v = (ss ? sessionStorage : localStorage).getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set(k, v, ss) { try { (ss ? sessionStorage : localStorage).setItem(k, JSON.stringify(v)); } catch {} },
+  del(k, ss) { try { (ss ? sessionStorage : localStorage).removeItem(k); } catch {} },
 };
 
 /* ================= 데이터 계층 ================= */
@@ -329,6 +393,7 @@ function localApi() {
       const db = load();
       return { entries: db.entries.filter((e) => e.date >= from && e.date <= to), config: { reasons: db.reasons, total: db.total } };
     },
+    async login() { return true; },
     async upsert(entry) {
       const db = load();
       db.entries = db.entries.filter((e) => !(e.date === entry.date && e.name === entry.name));
@@ -344,7 +409,7 @@ function localApi() {
 function remoteApi(url) {
   async function post(payload) {
     // text/plain 으로 보내야 Apps Script에서 CORS preflight 없이 동작
-    const r = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+    const r = await fetch(url, { method: 'POST', body: JSON.stringify({ ...payload, auth: S.admin || undefined }) });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || '저장 실패');
     return j;
@@ -357,13 +422,18 @@ function remoteApi(url) {
       if (!j.ok) throw new Error(j.error || '불러오기 실패');
       return j;
     },
+    async login(id, pw) {
+      const r = await fetch(url, { method: 'POST', body: JSON.stringify({ action: 'login', auth: { id, pw } }) });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || '로그인 실패');
+      return true;
+    },
     upsert: (entry) => post({ action: 'upsert', entry }),
     remove: (date, name) => post({ action: 'remove', date, name }),
     addReason: (reason) => post({ action: 'addReason', reason }),
     setTotal: (total) => post({ action: 'setTotal', total }),
   };
 }
-const api = CONFIG.API_URL ? remoteApi(CONFIG.API_URL) : localApi();
 
 /* ================= 상태 ================= */
 const prefs = store.get('kd_prefs', {});
@@ -375,17 +445,24 @@ const S = {
   months: {},             // 'YYYY-MM' -> entries[]
   reasons: DEFAULT_REASONS.slice(),
   total: CONFIG.DEFAULT_TOTAL,
-  form: { status: 'none', reason: '육아시간', s: null, e: null },
-  pendingEnd: false,
+  form: { status: 'none', reason: '육아시간', slots: new Set() },
   kind: null,             // 사용자가 직접 고른 문구 종류 (없으면 자동)
   newReasonType: 'leave',
+  admin: store.get('kd_admin', null, true), // {id, pw} — 이 탭에서만 유지
 };
 S.anchor = S.target;
+const api = CONFIG.API_URL ? remoteApi(CONFIG.API_URL) : localApi();
+const isLocked = () => S.target !== defaultTarget() && !S.admin;
 
 const monthKey = (s) => s.slice(0, 7);
 function monthRange(key) {
   const [y, m] = key.split('-').map(Number);
   return [`${key}-01`, ymd(new Date(y, m, 0))];
+}
+function normEntry(e) {
+  // 예전 형식(start/end)도 읽을 수 있게
+  const times = e.times || (e.start && e.end ? `${e.start}~${e.end}` : '');
+  return { date: String(e.date).slice(0, 10), name: String(e.name), status: e.status, reason: e.reason || '', times: normTimes(times), updatedAt: e.updatedAt };
 }
 async function ensureMonths(keys, force = false) {
   const need = [...new Set(keys)].filter((k) => force || !S.months[k]);
@@ -399,11 +476,6 @@ async function ensureMonths(keys, force = false) {
       if (res.config.total) S.total = Number(res.config.total);
     }
   }));
-}
-// 구글 시트가 '08:30' → '8:30' 처럼 바꿔 돌려주는 경우가 있어 정규화
-const normTime = (t) => { const m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? `${pad(Number(m[1]))}:${m[2]}` : ''; };
-function normEntry(e) {
-  return { ...e, date: String(e.date).slice(0, 10), name: String(e.name), start: normTime(e.start), end: normTime(e.end) };
 }
 const entriesOn = (date) => (S.months[monthKey(date)] || []).filter((e) => e.date === date);
 function entriesBetween(from, to) {
@@ -423,6 +495,15 @@ function renderDateNav() {
   const b = $('backToDefault');
   if (b) b.onclick = () => { S.userNavigated = false; setTarget(defaultTarget()); };
 }
+function renderLock() {
+  const locked = isLocked();
+  $('lockBox').hidden = !locked;
+  $('formFields').disabled = locked;
+  $('saveBtn').disabled = locked;
+  $('deleteBtn').disabled = locked;
+  $('adminBadge').hidden = !S.admin;
+  $('totalBtn').hidden = !S.admin;
+}
 
 function renderReasons() {
   const sel = $('reason');
@@ -431,39 +512,21 @@ function renderReasons() {
   if (S.reasons.some((r) => r.name === cur)) sel.value = cur; else { S.form.reason = S.reasons[0].name; sel.value = S.form.reason; }
 }
 
-const PRESETS = [
-  { label: '종일 08:30~17:30', s: '08:30', e: '17:30' },
-  { label: '오전 08:30~12:00', s: '08:30', e: '12:00' },
-  { label: '오후 13:00~17:30', s: '13:00', e: '17:30' },
-  { label: '15:30~17:30', s: '15:30', e: '17:30' },
-];
+const PRESETS = ['08:30~17:30', '08:30~12:00', '13:00~17:30', '15:30~17:30'];
 function renderPresets() {
-  $('presets').innerHTML = PRESETS.map((p, i) => `<button type="button" data-p="${i}">${p.label}</button>`).join('');
+  $('presets').innerHTML = PRESETS.map((p) => `<button type="button" data-p="${p}">${p}</button>`).join('')
+    + '<button type="button" class="clear" data-p="">선택 해제</button>';
 }
 function renderBlocks() {
-  const { s, e } = S.form;
+  const slots = S.form.slots;
   let html = '';
   for (let i = 0; i < NSLOTS; i++) {
-    const on = s !== null && i >= s && i <= (e ?? s);
-    const anchor = S.pendingEnd && i === s;
-    html += `<button type="button" class="blk${on ? ' on' : ''}${anchor ? ' anchor' : ''}" data-i="${i}" aria-pressed="${on}" aria-label="${fromMin(slotStart(i))}부터 30분">${fromMin(slotStart(i)).replace(/^0/, '')}</button>`;
+    const on = slots.has(i);
+    html += `<button type="button" class="blk${on ? ' on' : ''}" data-i="${i}" aria-pressed="${on}" aria-label="${fromMin(slotStart(i))}부터 30분">${fromMin(slotStart(i)).replace(/^0/, '')}</button>`;
   }
   $('blocks').innerHTML = html;
-  if (s === null) { $('timeText').textContent = '시간을 선택하세요'; return; }
-  const st = fromMin(slotStart(s)), en = fromMin(slotStart((e ?? s) + 1));
-  const h = ((e ?? s) - s + 1) * 0.5;
-  $('timeText').textContent = `${st} ~ ${en} (${fmtH(h)}시간)${S.pendingEnd ? ' · 끝 칸을 누르면 범위 선택' : ''}`;
-}
-function setFormTimes(start, end) {
-  if (!start || !end) { S.form.s = S.form.e = null; return; }
-  const s = (toMin(start) - DAY_START) / SLOT;
-  const e = (toMin(end) - DAY_START) / SLOT - 1;
-  if (s >= 0 && e < NSLOTS && e >= s) { S.form.s = s; S.form.e = e; } else { S.form.s = S.form.e = null; }
-}
-function formTimes() {
-  const { s, e } = S.form;
-  if (s === null) return { start: '', end: '' };
-  return { start: fromMin(slotStart(s)), end: fromMin(slotStart((e ?? s) + 1)) };
+  if (!slots.size) { $('timeText').textContent = '시간을 선택하세요'; return; }
+  $('timeText').textContent = `${dispTimes(slotsToTimes(slots))} (${fmtH(slots.size * 0.5)}시간)`;
 }
 
 function renderStatus() {
@@ -477,16 +540,15 @@ let formSource = 'new';
 function loadFormForTarget() {
   const name = normName($('name').value);
   const existing = name ? entriesOn(S.target).find((e) => e.name === name) : null;
-  S.pendingEnd = false;
   if (existing) {
     S.form.status = existing.status;
     if (existing.reason) S.form.reason = existing.reason;
-    setFormTimes(existing.start, existing.end);
+    S.form.slots = timesToSlots(existing.times);
     formSource = 'saved';
   } else {
     S.form.status = prefs.status || 'none';
     S.form.reason = prefs.reason || '육아시간';
-    setFormTimes(prefs.start, prefs.end);
+    S.form.slots = timesToSlots(prefs.times || (prefs.start && prefs.end ? `${prefs.start}~${prefs.end}` : ''));
     formSource = prefs.status ? 'prefs' : 'new';
   }
   renderForm();
@@ -501,39 +563,42 @@ function renderFormState() {
   else el.innerHTML = `📝 <b>${esc(name)}</b> · 아직 저장 안 됨`;
 }
 function renderForm() {
-  renderDateNav(); renderStatus(); renderReasons(); renderBlocks(); renderFormState();
+  renderDateNav(); renderStatus(); renderReasons(); renderBlocks(); renderFormState(); renderLock();
 }
 
 function toast(id, text, err = false) {
   const el = $(id); el.textContent = text; el.classList.toggle('err', err);
-  clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = ''; }, 2500);
+  clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = ''; }, 3000);
 }
 
 async function save() {
+  if (isLocked()) { toast('toast', '관리자 로그인이 필요해요', true); return; }
   const name = normName($('name').value);
   if (!name) { toast('toast', '이름을 입력하세요', true); $('name').focus(); return; }
   $('name').value = name;
-  const entry = { date: S.target, name, status: S.form.status, reason: '', start: '', end: '', updatedAt: new Date().toISOString() };
+  const entry = { date: S.target, name, status: S.form.status, reason: '', times: '', updatedAt: new Date().toISOString() };
   if (S.form.status === 'absent') {
-    const t = formTimes();
-    if (!t.start) { toast('toast', '결강 시간을 선택하세요', true); return; }
-    Object.assign(entry, { reason: S.form.reason, ...t });
+    if (!S.form.slots.size) { toast('toast', '결강 시간을 선택하세요', true); return; }
+    entry.reason = S.form.reason;
+    entry.times = slotsToTimes(S.form.slots);
   }
   $('saveBtn').disabled = true;
   try {
     await api.upsert(entry);
     const k = monthKey(entry.date);
     S.months[k] = (S.months[k] || []).filter((e) => !(e.date === entry.date && e.name === name)).concat(entry);
-    Object.assign(prefs, { name, status: entry.status, reason: entry.reason || prefs.reason, start: entry.start || prefs.start, end: entry.end || prefs.end });
+    Object.assign(prefs, { name, status: entry.status, reason: entry.reason || prefs.reason, times: entry.times || prefs.times });
+    delete prefs.start; delete prefs.end;
     store.set('kd_prefs', prefs);
     formSource = 'saved';
     toast('toast', '저장됐어요 ✓');
     renderAll();
   } catch (err) {
     toast('toast', `저장 실패: ${err.message}`, true);
-  } finally { $('saveBtn').disabled = false; }
+  } finally { renderLock(); }
 }
 async function removeMine() {
+  if (isLocked()) return;
   const name = normName($('name').value);
   if (!name) return;
   try {
@@ -549,7 +614,7 @@ async function removeMine() {
 async function setTarget(t) {
   S.target = t;
   S.anchor = t;
-  renderDateNav();
+  renderDateNav(); renderLock();
   try { await ensureMonths([monthKey(t), ...dashMonths()]); } catch (err) { toast('toast', `불러오기 실패: ${err.message}`, true); }
   loadFormForTarget();
   renderAll();
@@ -557,16 +622,19 @@ async function setTarget(t) {
 
 /* ================= 보고 문구 ================= */
 const LETTERS = '가나다라마바사아자차카타파하';
-const byTimeName = (a, b) => (a.start || '').localeCompare(b.start || '') || a.name.localeCompare(b.name, 'ko');
+const firstStart = (e) => (parseRanges(e.times)[0] || [''])[0];
+const byTimeName = (a, b) => firstStart(a).localeCompare(firstStart(b)) || a.name.localeCompare(b.name, 'ko');
 function buildMessage(date, kind) {
-  const all = entriesOn(date);
-  const absent = all.filter((e) => e.status === 'absent');
+  const absent = entriesOn(date).filter((e) => e.status === 'absent');
   const leave = absent.filter((e) => reasonType(e.reason) === 'leave').sort(byTimeName);
-  const groups = new Map(FIXED_TIME_ITEMS.map((n) => [n, []]));
+  const groups = new Map((kind === 'draft' ? DRAFT_ALWAYS : []).map((n) => [n, []]));
   absent.filter((e) => reasonType(e.reason) !== 'leave').forEach((e) => {
     if (!groups.has(e.reason)) groups.set(e.reason, []);
     groups.get(e.reason).push(e);
   });
+  const rank = (n) => { const i = ITEM_ORDER.indexOf(n); return i < 0 ? 99 : i; };
+  const ordered = [...groups].sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0], 'ko'));
+
   const total = S.total;
   const items = [];
   items.push(`출근현황 : 총원 ${total}명, ${leave.length ? `휴가 ${leave.length}명, ` : ''}출근 ${total - leave.length}명`);
@@ -575,12 +643,11 @@ function buildMessage(date, kind) {
     leave.forEach((e) => cnt.set(e.reason, (cnt.get(e.reason) || 0) + 1));
     const rtxt = cnt.size === 1 ? [...cnt.keys()][0] : [...cnt].map(([r, n]) => `${r} ${n}`).join(', ');
     const multi = cnt.size > 1;
-    items.push([`휴가 : ${leave.length}명(${rtxt})`, ...leave.map((e) => ` * ${e.name}(${multi ? e.reason + ' ' : ''}${e.start}~${e.end})`)].join('\n'));
+    items.push([`휴가 : ${leave.length}명(${rtxt})`, ...leave.map((e) => ` * ${e.name}(${multi ? e.reason + ' ' : ''}${dispTimes(e.times)})`)].join('\n'));
   }
-  for (const [r, list] of groups) {
-    if (kind === 'final' && !list.length) continue; // 최종 문구에서는 0명 항목 생략
+  for (const [r, list] of ordered) {
     list.sort(byTimeName);
-    items.push([`${r} : ${list.length}명`, ...list.map((e) => ` * ${e.name}(${e.start}~${e.end})`)].join('\n'));
+    items.push([`${r} : ${list.length}명`, ...list.map((e) => ` * ${e.name}(${dispTimes(e.times)})`)].join('\n'));
   }
   items.push('건강상태 : 이상무');
   const body = `${reportDate(date)}  <${CONFIG.UNIT}>\n` + items.map((t, i) => `${LETTERS[i]}. ${t}`).join('\n');
@@ -601,7 +668,7 @@ function renderMessage() {
     [absent.length, '결강'],
     [S.total - leaveN, '출근'],
   ].map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
-  $('totalBtn').textContent = `${S.total}명 (수정)`;
+  $('totalText').textContent = `${S.total}명`;
 }
 async function copyMsg() {
   const text = $('msg').textContent;
@@ -637,7 +704,7 @@ function periodLabel(days) {
   const d = parseYmd(S.anchor); return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
 }
 function tipFor(e) {
-  return `${e.name}\n${shortDate(e.date)} · ${e.reason}\n${e.start}~${e.end} (${fmtH(hoursOf(e))}시간)`;
+  return `${e.name}\n${shortDate(e.date)} · ${e.reason}\n${dispTimes(e.times)} (${fmtH(hoursOf(e))}시간)`;
 }
 function renderDash() {
   document.querySelectorAll('#viewSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
@@ -645,6 +712,7 @@ function renderDash() {
   $('periodText').textContent = periodLabel(days);
   const entries = entriesBetween(days[0], days[days.length - 1]).filter((e) => e.status === 'absent' && days.includes(e.date));
   const body = $('dashBody');
+  if (S.view === 'month') { renderMonth(body, entries); return; }
   if (!entries.length) { body.innerHTML = `<div class="empty">이 기간에는 결강이 없어요</div>`; return; }
 
   if (S.view === 'day') {
@@ -661,11 +729,14 @@ function renderDash() {
       <div class="tl">
         ${entries.map((e) => {
           const h = hoursOf(e), b = binOf(h);
-          const left = ((toMin(e.start) - DAY_START) / span) * 100;
-          const width = ((toMin(e.end) - toMin(e.start)) / span) * 100;
+          const segs = parseRanges(e.times).map(([a, z]) => {
+            const left = ((toMin(a) - DAY_START) / span) * 100;
+            const width = ((toMin(z) - toMin(a)) / span) * 100;
+            return `<div class="tlseg" style="left:${left}%;width:calc(${width}% - 2px);background:var(--b${b})"></div>`;
+          }).join('');
           return `<div class="tlrow">
-            <div class="tlname">${esc(e.name.replace(/^\S+\s/, ''))}<small>${esc(e.reason)}</small></div>
-            <div class="tltrack" data-tip="${esc(tipFor(e))}"><div class="tlseg" style="left:${left}%;width:calc(${width}% - 2px);background:var(--b${b})"></div></div>
+            <div class="tlname">${esc(shortName(e.name))}<small>${esc(e.reason)}</small></div>
+            <div class="tltrack" data-tip="${esc(tipFor(e))}">${segs}</div>
             <div class="tlh">${fmtH(h)}h</div>
           </div>`;
         }).join('')}
@@ -674,7 +745,7 @@ function renderDash() {
     return;
   }
 
-  // 주 / 월: 사람 × 날짜 히트맵
+  // 주: 사람 × 요일 히트맵
   const people = new Map();
   for (const e of entries) {
     if (!people.has(e.name)) people.set(e.name, { name: e.name, total: 0, byDate: {} });
@@ -682,26 +753,54 @@ function renderDash() {
     p.byDate[e.date] = e; p.total += hoursOf(e);
   }
   const rows = [...people.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'ko'));
-  const month = S.view === 'month';
-  const head = days.map((d) => {
-    const dt = parseYmd(d);
-    return `<th>${month ? dt.getDate() : `${WD[dt.getDay()]}<br>${dt.getMonth() + 1}.${dt.getDate()}`}</th>`;
-  }).join('');
+  const head = days.map((d) => { const dt = parseYmd(d); return `<th>${WD[dt.getDay()]}<br>${dt.getMonth() + 1}.${dt.getDate()}</th>`; }).join('');
   const sum = rows.reduce((a, p) => a + p.total, 0);
   body.innerHTML = `
-    <div class="hint" style="margin-top:12px">결강 ${rows.length}명 · 총 ${fmtH(sum)}시간${month ? ' · 옆으로 밀어서 보기' : ''}</div>
-    <div class="hmwrap"><table class="hm${month ? ' month' : ''}">
+    <div class="hint" style="margin-top:12px">결강 ${rows.length}명 · 총 ${fmtH(sum)}시간</div>
+    <div class="hmwrap"><table class="hm">
       <thead><tr><th class="nm">이름</th>${head}<th>합계</th></tr></thead>
       <tbody>${rows.map((p) => `<tr>
-        <td class="nm">${esc(p.name.replace(/^\S+\s/, ''))}</td>
+        <td class="nm">${esc(shortName(p.name))}</td>
         ${days.map((d) => {
           const e = p.byDate[d];
           if (!e) return '<td class="c"></td>';
           const h = hoursOf(e), b = binOf(h);
-          return `<td class="c" data-tip="${esc(tipFor(e))}" style="background:var(--b${b});color:var(--b${b}-ink)">${month ? '' : fmtH(h)}</td>`;
+          return `<td class="c" data-tip="${esc(tipFor(e))}" style="background:var(--b${b});color:var(--b${b}-ink)">${fmtH(h)}</td>`;
         }).join('')}
         <td class="tot">${fmtH(p.total)}h</td></tr>`).join('')}
       </tbody></table></div>`;
+}
+
+// 월: 월~금 달력. 날짜를 누르면 그날의 일간 보기로 이동.
+function renderMonth(body, entries) {
+  const key = monthKey(S.anchor);
+  const [from, to] = monthRange(key);
+  const byDate = {};
+  for (const e of entries) (byDate[e.date] = byDate[e.date] || []).push(e);
+  const today = todayStr();
+  const MAXCHIPS = 3;
+  let cells = '';
+  for (let w = weekStart(from); w <= to; w = addDays(w, 7)) {
+    const week = [0, 1, 2, 3, 4].map((i) => addDays(w, i));
+    if (!week.some((d) => d >= from && d <= to)) continue;
+    for (const d of week) {
+      if (d < from || d > to) { cells += '<div class="day out" aria-hidden="true"></div>'; continue; }
+      const list = (byDate[d] || []).slice().sort((a, b) => hoursOf(b) - hoursOf(a) || a.name.localeCompare(b.name, 'ko'));
+      const chips = list.slice(0, MAXCHIPS).map((e) => {
+        const b = binOf(hoursOf(e));
+        return `<span class="chip" style="background:var(--b${b});color:var(--b${b}-ink)">${esc(shortName(e.name))}</span>`;
+      }).join('');
+      const more = list.length > MAXCHIPS ? `<span class="more">+${list.length - MAXCHIPS}명</span>` : '';
+      const tipText = list.length ? `${shortDate(d)} 결강 ${list.length}명\n` + list.map((e) => `${shortName(e.name)} · ${e.reason} ${fmtH(hoursOf(e))}h`).join('\n') : `${shortDate(d)} 결강 없음`;
+      cells += `<button type="button" class="day${d === today ? ' today' : ''}" data-date="${d}" data-tip="${esc(tipText)}" aria-label="${esc(tipText.replace(/\n/g, ', '))}">
+        <span class="dn"><span>${parseYmd(d).getDate()}</span>${list.length ? `<span class="cnt">${list.length}명</span>` : ''}</span>${chips}${more}</button>`;
+    }
+  }
+  const monthEntries = entries.length;
+  const sum = entries.reduce((a, e) => a + hoursOf(e), 0);
+  body.innerHTML = `
+    <div class="hint" style="margin-top:12px">${monthEntries ? `결강 ${new Set(entries.map((e) => e.name)).size}명 · 연인원 ${monthEntries}명 · 총 ${fmtH(sum)}시간 · 날짜를 누르면 자세히` : '이 달에는 결강이 없어요'}</div>
+    <div class="cal">${['월', '화', '수', '목', '금'].map((x) => `<div class="dow">${x}</div>`).join('')}${cells}</div>`;
 }
 
 /* 툴팁: 마우스는 hover, 터치는 탭 */
@@ -709,7 +808,7 @@ const tip = $('tip');
 function showTip(el, x, y) {
   tip.textContent = el.dataset.tip; tip.hidden = false;
   const r = tip.getBoundingClientRect();
-  let left = Math.min(Math.max(8, x - r.width / 2), innerWidth - r.width - 8);
+  const left = Math.min(Math.max(8, x - r.width / 2), innerWidth - r.width - 8);
   let top = y - r.height - 12; if (top < 8) top = y + 16;
   tip.style.left = `${left}px`; tip.style.top = `${top}px`;
 }
@@ -719,11 +818,12 @@ document.addEventListener('pointerover', (ev) => {
   if (el) showTip(el, ev.clientX, ev.clientY); else tip.hidden = true;
 });
 document.addEventListener('pointermove', (ev) => {
-  if (ev.pointerType === 'mouse' && !tip.hidden && ev.target.closest('[data-tip]')) showTip(ev.target.closest('[data-tip]'), ev.clientX, ev.clientY);
+  const el = ev.target.closest('[data-tip]');
+  if (ev.pointerType === 'mouse' && !tip.hidden && el) showTip(el, ev.clientX, ev.clientY);
 });
 document.addEventListener('click', (ev) => {
   const el = ev.target.closest('[data-tip]');
-  if (el) { const r = el.getBoundingClientRect(); showTip(el, r.left + r.width / 2, r.top); } else tip.hidden = true;
+  if (el && !el.dataset.date) { const r = el.getBoundingClientRect(); showTip(el, r.left + r.width / 2, r.top); } else tip.hidden = true;
 });
 addEventListener('scroll', () => { tip.hidden = true; }, { passive: true, capture: true });
 
@@ -753,22 +853,17 @@ $('statusSeg').onclick = (ev) => {
 };
 $('reason').onchange = () => {
   S.form.reason = $('reason').value;
-  // 휴가류인데 시간이 비어 있으면 종일로 채움
-  if (reasonType(S.form.reason) === 'leave' && S.form.s === null) { setFormTimes('08:30', '17:30'); renderBlocks(); }
+  // 휴가류인데 시간이 비어 있으면 08:30~17:30 으로 채움
+  if (reasonType(S.form.reason) === 'leave' && !S.form.slots.size) { S.form.slots = timesToSlots('08:30~17:30'); renderBlocks(); }
 };
 $('presets').onclick = (ev) => {
   const b = ev.target.closest('button'); if (!b) return;
-  const p = PRESETS[Number(b.dataset.p)];
-  setFormTimes(p.s, p.e); S.pendingEnd = false; renderBlocks();
+  S.form.slots = timesToSlots(b.dataset.p); renderBlocks();
 };
 $('blocks').onclick = (ev) => {
   const b = ev.target.closest('.blk'); if (!b) return;
   const i = Number(b.dataset.i);
-  if (S.pendingEnd && S.form.s !== null) {
-    const a = S.form.s; S.form.s = Math.min(a, i); S.form.e = Math.max(a, i); S.pendingEnd = false;
-  } else {
-    S.form.s = i; S.form.e = i; S.pendingEnd = true;
-  }
+  if (S.form.slots.has(i)) S.form.slots.delete(i); else S.form.slots.add(i);
   renderBlocks();
 };
 $('addReasonBtn').onclick = () => { $('addReasonForm').hidden = false; $('newReason').focus(); };
@@ -793,6 +888,21 @@ $('saveReason').onclick = async () => {
 };
 $('saveBtn').onclick = save;
 $('deleteBtn').onclick = removeMine;
+$('loginForm').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const id = $('adminId').value.trim(), pw = $('adminPw').value;
+  if (!id || !pw) return;
+  $('loginBtn').disabled = true;
+  try {
+    await api.login(id, pw);
+    S.admin = { id, pw }; store.set('kd_admin', S.admin, true);
+    $('adminPw').value = '';
+    toast('toast', '관리자로 로그인했어요');
+    renderAll();
+  } catch (err) { toast('toast', err.message, true); }
+  finally { $('loginBtn').disabled = false; }
+};
+$('adminBadge').onclick = () => { S.admin = null; store.del('kd_admin', true); toast('toast', '로그아웃했어요'); renderAll(); };
 $('kindSeg').onclick = (ev) => { const b = ev.target.closest('button'); if (!b) return; S.kind = b.dataset.kind; renderMessage(); };
 $('copyBtn').onclick = copyMsg;
 $('totalBtn').onclick = () => { $('totalEdit').hidden = false; $('totalInput').value = S.total; $('totalInput').focus(); };
@@ -808,6 +918,12 @@ $('viewSeg').onclick = async (ev) => {
   await ensureMonths(dashMonths()).catch(() => {});
   renderDash();
 };
+$('dashBody').addEventListener('click', (ev) => {
+  const d = ev.target.closest('.day[data-date]');
+  if (!d) return;
+  S.view = 'day'; S.anchor = d.dataset.date; store.set('kd_view', S.view);
+  renderDash();
+});
 async function movePeriod(dir) {
   if (S.view === 'day') S.anchor = nextWeekday(S.anchor, dir);
   else if (S.view === 'week') S.anchor = addDays(weekStart(S.anchor), dir * 7);
@@ -818,20 +934,21 @@ async function movePeriod(dir) {
 $('prevPeriod').onclick = () => movePeriod(-1);
 $('nextPeriod').onclick = () => movePeriod(1);
 
-/* 미리보기용 샘플 데이터 */
+/* 미리보기용 샘플 데이터 (미리보기 모드에서만) */
 $('seedBtn').onclick = async () => {
   const names = ['서정원', '김병준', '홍진표', '손영주', '최창훈', '김주연', '이민수', '박지훈'];
-  const samples = [['육아시간', '15:30', '17:30'], ['청원휴가', '08:30', '17:30'], ['자녀돌봄', '13:00', '17:30'], ['육아시간', '16:30', '17:30'], ['자녀돌봄', '08:30', '12:00']];
+  const samples = [['육아시간', '15:30~17:30'], ['청원휴가', '08:30~17:30'], ['자녀돌봄', '08:00~08:30,13:00~15:00'], ['육아시간', '16:30~17:30'], ['자녀돌봄', '08:30~12:00']];
   const [from] = monthRange(monthKey(S.target));
   let seed = 7;
   const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  const now = new Date().toISOString();
   for (let t = from; t <= addDays(S.target, 5); t = addDays(t, 1)) {
     if (isWeekend(t)) continue;
-    await api.upsert({ date: t, name: '소령 서정원', status: 'absent', reason: '육아시간', start: '15:30', end: '17:30', updatedAt: new Date().toISOString() });
+    await api.upsert({ date: t, name: '소령 서정원', status: 'absent', reason: '육아시간', times: '15:30~17:30', updatedAt: now });
     for (const n of names.slice(1)) {
       const r = rnd();
-      if (r < 0.15) { const s = samples[Math.floor(rnd() * samples.length)]; await api.upsert({ date: t, name: `소령 ${n}`, status: 'absent', reason: s[0], start: s[1], end: s[2], updatedAt: new Date().toISOString() }); }
-      else if (r < 0.6) await api.upsert({ date: t, name: `소령 ${n}`, status: 'none', reason: '', start: '', end: '', updatedAt: new Date().toISOString() });
+      if (r < 0.2) { const s = samples[Math.floor(rnd() * samples.length)]; await api.upsert({ date: t, name: `소령 ${n}`, status: 'absent', reason: s[0], times: s[1], updatedAt: now }); }
+      else if (r < 0.6) await api.upsert({ date: t, name: `소령 ${n}`, status: 'none', reason: '', times: '', updatedAt: now });
     }
   }
   await ensureMonths([monthKey(S.target), ...dashMonths()], true);
@@ -840,18 +957,20 @@ $('seedBtn').onclick = async () => {
 
 /* 정오가 지나면 조사 날짜 자동 변경 */
 setInterval(() => {
-  if (S.userNavigated) return;
+  if (S.userNavigated) { renderDateNav(); renderLock(); return; }
   const t = defaultTarget();
   if (t !== S.target) setTarget(t);
 }, 60 * 1000);
 
 /* ================= 시작 ================= */
 (async function init() {
+  // ?demo 를 붙이면 서버 대신 이 기기에만 저장 (테스트용)
+  if (location.search.includes('demo')) { Object.assign(api, localApi()); }
   $('modeBadge').textContent = api.demo ? '미리보기 · 이 기기에만 저장' : '공유 저장';
   $('demoTools').hidden = !api.demo;
   if (prefs.name) $('name').value = prefs.name;
   renderPresets(); renderLegend();
-  renderDateNav();
+  renderDateNav(); renderLock();
   try { await ensureMonths([monthKey(S.target), ...dashMonths()]); }
   catch (err) { toast('toast', `불러오기 실패: ${err.message}`, true); }
   loadFormForTarget();
