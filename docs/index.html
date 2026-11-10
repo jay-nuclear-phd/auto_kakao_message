@@ -291,6 +291,7 @@ table.hm td.c[data-tip] { cursor: pointer; }
 const CONFIG = {
   // Google Apps Script 웹앱 배포 URL. 비워두면 이 기기에만 저장되는 미리보기 모드.
   API_URL: 'https://script.google.com/macros/s/AKfycbyKcIBPmcF_OE_hZ73SgueJFD8OhJQbQwUKRLHX4FDdvIIRkSdg8QjR5ltBa6ILh6Fn/exec',
+  SITE_URL: 'https://jay-nuclear-phd.github.io/auto_kakao_message/',
   UNIT: '3반',
   DEFAULT_TOTAL: 45,
 };
@@ -651,8 +652,9 @@ function buildMessage(date, kind) {
   }
   items.push('건강상태 : 이상무');
   const body = `${reportDate(date)}  <${CONFIG.UNIT}>\n` + items.map((t, i) => `${LETTERS[i]}. ${t}`).join('\n');
-  if (kind === 'draft') return `내일 출근현황 종합하겠습니다!\n\n${body}\n\n의견부탁드립니다!`;
-  return `${body}\n\n이상없으면 위에 현황으로 보고하겠습니다!`;
+  const link = `\n\n결강 입력: ${CONFIG.SITE_URL}`;
+  if (kind === 'draft') return `내일 출근현황 종합하겠습니다!\n\n${body}\n\n의견부탁드립니다!${link}`;
+  return `${body}\n\n이상없으면 위에 현황으로 보고하겠습니다!${link}`;
 }
 function autoKind(date) { return date > todayStr() ? 'draft' : 'final'; }
 function renderMessage() {

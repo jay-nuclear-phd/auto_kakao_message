@@ -42,6 +42,7 @@ ITEM_ORDER = ["육아시간", "모성보호시간", "자녀돌봄"]
 LETTERS = "가나다라마바사아자차카타파하"
 WD = ["월", "화", "수", "목", "금", "토", "일"]  # date.weekday() 순서
 KST = dt.timezone(dt.timedelta(hours=9))
+SITE_URL = "https://jay-nuclear-phd.github.io/auto_kakao_message/"
 
 
 def log(msg: str) -> None:
@@ -167,9 +168,10 @@ def build_message(date: str, kind: str, entries: list[dict], config: dict, unit:
 
     d = dt.date.fromisoformat(date)
     body = f"{report_date(d)}  <{unit}>\n" + "\n".join(f"{LETTERS[i]}. {t}" for i, t in enumerate(items))
+    link = f"\n\n결강 입력: {SITE_URL}"
     if kind == "draft":
-        return f"내일 출근현황 종합하겠습니다!\n\n{body}\n\n의견부탁드립니다!"
-    return f"{body}\n\n이상없으면 위에 현황으로 보고하겠습니다!"
+        return f"내일 출근현황 종합하겠습니다!\n\n{body}\n\n의견부탁드립니다!{link}"
+    return f"{body}\n\n이상없으면 위에 현황으로 보고하겠습니다!{link}"
 
 
 # ---------- 전송 ----------

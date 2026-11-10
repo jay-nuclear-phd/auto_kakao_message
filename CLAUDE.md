@@ -57,6 +57,9 @@
 - Windows 한국어 OCR(`Windows.Media.Ocr`, ko)은 쓸 수 있지만 오인식이 많아(출근→줄근, 명→몀, 15:30→1530) 데이터 추출용으로는 쓰지 않는다.
 
 ## 안 되는 방법 (다시 시도하지 말 것)
+- **키보드 없이(윈도우 메시지만으로) 전송** — 화면 잠금 대응용으로 2026-11-10 시험, 실패:
+  - 입력창에 글 넣기는 WM_SETTEXT / EM_REPLACESEL / WM_CHAR / WM_PASTE 모두 된다 (WM_GETTEXT로 확인 가능, GetWindowTextLength는 0을 돌려줘서 못 씀).
+  - 그러나 Enter를 PostMessage/SendMessage(WM_KEYDOWN, WM_CHAR), 가짜 WM_ACTIVATE/WM_SETFOCUS, AttachThreadInput+SetFocus, SetKeyboardState(VK_RETURN) 어떤 조합으로 보내도 전송되지 않음 (가끔 입력창이 줄바꿈으로 바뀌기만 함). 우연히 2번 성공했지만 재현 안 됨 → 카톡은 실제 키 입력을 요구하는 것으로 판단.
 - 입력창에 `WM_SETTEXT`: 전송 버튼이 활성화되지 않고 한글이 공백으로 들어감.
 - `PostMessage`로 Enter 전송: 카카오톡이 무시함.
 - UI Automation: 카카오 자체 컨트롤이라 목록 내용을 못 읽음.
@@ -95,6 +98,7 @@
   ```
 - 휴가자가 있으면 `총원 45명, 휴가 1명, 출근 44명` + `나. 휴가 : 1명(청원휴가)\n * 소령 OOO(08:30~17:30)` 처럼 항목이 추가되고 이후 항목 기호(나/다/라…)가 밀린다.
 - 날짜 형식: `'YY.M.D.(요일)` 뒤에 공백 두 칸 + `<3반>`.
+- 초안·최종 문구 맨 끝에 빈 줄 + `결강 입력: https://jay-nuclear-phd.github.io/auto_kakao_message/` (사이트 CONFIG.SITE_URL, kakao_report.py SITE_URL).
 
 ### 변동사항 반영 규칙 (사용자 지정)
 - 항목은 메시지의 기호(가/나/다)가 아니라 **항목 이름**(휴가, 육아시간, 모성보호시간 등)으로 매칭한다.
