@@ -30,8 +30,15 @@ $w = [KS]::FindExact($Title)
 if ($w -eq [IntPtr]::Zero) { Write-Error "채팅방 창을 찾을 수 없음: $Title (창이 열려 있어야 함)"; exit 1 }
 $edit = [KS]::FindWindowEx($w, [IntPtr]::Zero, "RICHEDIT50W", $null)
 if ($edit -eq [IntPtr]::Zero) { Write-Error "입력창을 찾을 수 없음"; exit 1 }
-[void][KS]::ShowWindow($w, 9); [void][KS]::SetForegroundWindow($w)
-Start-Sleep -Milliseconds 400
+# 백그라운드(작업 스케줄러)에서 실행되면 Windows가 SetForegroundWindow를 막을 수 있어
+# Alt 키를 한 번 눌렀다 떼서 포그라운드 잠금을 푼 뒤 시도한다. 최대 3회.
+for ($try = 0; $try -lt 3; $try++) {
+  [void][KS]::ShowWindow($w, 9)
+  [KS]::keybd_event(0x12,0,0,[UIntPtr]::Zero); [KS]::keybd_event(0x12,0,2,[UIntPtr]::Zero)
+  [void][KS]::SetForegroundWindow($w)
+  Start-Sleep -Milliseconds 500
+  if ([KS]::GetForegroundWindow() -eq $w) { break }
+}
 if ([KS]::GetForegroundWindow() -ne $w) { Write-Error "채팅방 창을 앞으로 가져오지 못함 - 전송 중단"; exit 1 }
 [KS]::Focus($edit)
 Start-Sleep -Milliseconds 200

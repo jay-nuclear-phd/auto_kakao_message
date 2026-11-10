@@ -24,6 +24,16 @@
 - WSL에서 `powershell.exe`로 Win32 API를 호출해 제어한다. 프로젝트 경로는 Windows에서 `C:\Users\staro\Github\auto_kakao_message`.
 - 사용자는 3반 소령 서정원. 단톡방 반장(소령 김주연)의 인원 종합 업무를 자동화하는 것이 목표.
 
+## 자동 보고 (automation/)
+- `automation/kakao_report.py --kind draft|final [--dry-run] [--room 방] [--date YYYY-MM-DD] [--force]`
+  - Apps Script에서 데이터를 받아 문구를 만들고 `kakao_send.ps1`로 전송. 문구 규칙은 `docs/index.html`의 `buildMessage`와 **똑같아야 한다** (한쪽을 바꾸면 다른 쪽도 바꾸고, 사이트 `?demo`에 같은 데이터를 넣어 출력 비교).
+  - draft = 다음 근무일, final = 오늘. 주말과 `skip_dates.txt`의 날짜는 보내지 않음.
+  - 받는 방: `automation/config.json`의 `room` (창 제목과 정확히 일치). 로그: `automation/logs/report.log`.
+- Windows Python: `C:\Users\staro\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe` (`python` 명령은 Store 스텁이라 쓰지 말 것).
+- 작업 스케줄러: `KakaoReport\Draft_1600`(평일 16:00), `KakaoReport\Final_0700`(평일 07:00), "Interactive only". 백그라운드 실행에서도 전송되는 것 확인함 (kakao_send.ps1의 Alt 키 + SetForegroundWindow 재시도).
+- 실행 조건: PC 켜짐 + Windows 로그인 + **화면 잠금 해제 상태**(키 입력 방식이라 잠금 화면에서는 실패) + 카톡 로그인 + 받는 방 창이 열려 있을 것. 꺼져 있던 시간은 나중에 몰아서 보내지 않는다.
+- 소통방(`26-3기 소통방(교관님 미포함)`)으로 바꾸는 것은 사용자가 명시적으로 허락했을 때만.
+
 ## 스크립트
 - `kakao_send.ps1 -Title <방 제목> -TextFile <UTF-8 텍스트 파일>`: 메시지 전송
 - `kakao_read.ps1 -Title <방 제목> [-Last N]`: 대화 내용 읽기 (마지막 N줄)
