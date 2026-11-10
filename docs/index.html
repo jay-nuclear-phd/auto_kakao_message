@@ -92,7 +92,6 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accen
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--track); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg button { min-height: 44px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; color: var(--text-secondary); }
 .seg button[aria-pressed=true] { background: var(--card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
-.seg.absent-on button[data-status=absent][aria-pressed=true] { background: var(--accent); color: var(--accent-ink); }
 .seg.small button { min-height: 36px; font-size: 14px; }
 
 .ghost { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-1); font-weight: 600; white-space: nowrap; }
@@ -202,15 +201,7 @@ table.hm td.c[data-tip] { cursor: pointer; }
       </label>
       <datalist id="nameList"></datalist>
 
-      <div class="field">
-        <span class="label">결강 여부</span>
-        <div class="seg" id="statusSeg" role="radiogroup" aria-label="결강 여부">
-          <button type="button" data-status="none" aria-pressed="false">결강 없음</button>
-          <button type="button" data-status="absent" aria-pressed="false">결강</button>
-        </div>
-      </div>
-
-      <div id="absentFields" hidden>
+      <div id="absentFields">
         <div class="field">
           <span class="label">사유</span>
           <div class="row">
@@ -446,7 +437,7 @@ const S = {
   months: {},             // 'YYYY-MM' -> entries[]
   reasons: DEFAULT_REASONS.slice(),
   total: CONFIG.DEFAULT_TOTAL,
-  form: { status: 'none', reason: '육아시간', slots: new Set() },
+  form: { reason: '육아시간', slots: new Set() },
   kind: null,             // 사용자가 직접 고른 문구 종류 (없으면 자동)
   newReasonType: 'leave',
   admin: store.get('kd_admin', null, true), // {id, pw} — 이 탭에서만 유지
@@ -530,27 +521,18 @@ function renderBlocks() {
   $('timeText').textContent = `${dispTimes(slotsToTimes(slots))} (${fmtH(slots.size * 0.5)}시간)`;
 }
 
-function renderStatus() {
-  const absent = S.form.status === 'absent';
-  document.querySelectorAll('#statusSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.status === S.form.status)));
-  $('statusSeg').classList.toggle('absent-on', absent);
-  $('absentFields').hidden = !absent;
-}
-
 let formSource = 'new';
 function loadFormForTarget() {
   const name = normName($('name').value);
-  const existing = name ? entriesOn(S.target).find((e) => e.name === name) : null;
+  const existing = name ? entriesOn(S.target).find((e) => e.name === name && e.status === 'absent') : null;
   if (existing) {
-    S.form.status = existing.status;
     if (existing.reason) S.form.reason = existing.reason;
     S.form.slots = timesToSlots(existing.times);
     formSource = 'saved';
   } else {
-    S.form.status = prefs.status || 'none';
     S.form.reason = prefs.reason || '육아시간';
     S.form.slots = timesToSlots(prefs.times || (prefs.start && prefs.end ? `${prefs.start}~${prefs.end}` : ''));
-    formSource = prefs.status ? 'prefs' : 'new';
+    formSource = prefs.times ? 'prefs' : 'new';
   }
   renderForm();
 }
@@ -564,7 +546,7 @@ function renderFormState() {
   else el.innerHTML = `📝 <b>${esc(name)}</b> · 아직 저장 안 됨`;
 }
 function renderForm() {
-  renderDateNav(); renderStatus(); renderReasons(); renderBlocks(); renderFormState(); renderLock();
+  renderDateNav(); renderReasons(); renderBlocks(); renderFormState(); renderLock();
 }
 
 function toast(id, text, err = false) {
@@ -577,19 +559,15 @@ async function save() {
   const name = normName($('name').value);
   if (!name) { toast('toast', '이름을 입력하세요', true); $('name').focus(); return; }
   $('name').value = name;
-  const entry = { date: S.target, name, status: S.form.status, reason: '', times: '', updatedAt: new Date().toISOString() };
-  if (S.form.status === 'absent') {
-    if (!S.form.slots.size) { toast('toast', '결강 시간을 선택하세요', true); return; }
-    entry.reason = S.form.reason;
-    entry.times = slotsToTimes(S.form.slots);
-  }
+  if (!S.form.slots.size) { toast('toast', '결강 시간을 선택하세요', true); return; }
+  const entry = { date: S.target, name, status: 'absent', reason: S.form.reason, times: slotsToTimes(S.form.slots), updatedAt: new Date().toISOString() };
   $('saveBtn').disabled = true;
   try {
     await api.upsert(entry);
     const k = monthKey(entry.date);
     S.months[k] = (S.months[k] || []).filter((e) => !(e.date === entry.date && e.name === name)).concat(entry);
-    Object.assign(prefs, { name, status: entry.status, reason: entry.reason || prefs.reason, times: entry.times || prefs.times });
-    delete prefs.start; delete prefs.end;
+    Object.assign(prefs, { name, reason: entry.reason, times: entry.times });
+    delete prefs.start; delete prefs.end; delete prefs.status;
     store.set('kd_prefs', prefs);
     formSource = 'saved';
     toast('toast', '저장됐어요 ✓');
@@ -662,13 +640,12 @@ function renderMessage() {
   document.querySelectorAll('#kindSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
   $('copyDate').textContent = `· ${shortDate(S.target)}`;
   $('msg').textContent = buildMessage(S.target, kind);
-  const all = entriesOn(S.target);
-  const absent = all.filter((e) => e.status === 'absent');
+  const absent = entriesOn(S.target).filter((e) => e.status === 'absent');
   const leaveN = absent.filter((e) => reasonType(e.reason) === 'leave').length;
   $('stats').innerHTML = [
-    [all.length, `응답 / ${S.total}명`],
     [absent.length, '결강'],
-    [S.total - leaveN, '출근'],
+    [leaveN, '휴가'],
+    [`${S.total - leaveN}/${S.total}`, '출근'],
   ].map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
   $('totalText').textContent = `${S.total}명`;
 }
@@ -726,7 +703,7 @@ function renderDash() {
       <div class="stats" style="margin-top:12px">
         <div class="stat"><div class="v">${entries.length}</div><div class="k">결강 인원</div></div>
         <div class="stat"><div class="v">${fmtH(total)}</div><div class="k">총 결강 시간</div></div>
-        <div class="stat"><div class="v">${entriesOn(days[0]).length}</div><div class="k">응답</div></div>
+        <div class="stat"><div class="v">${entries.filter((e) => reasonType(e.reason) === 'leave').length}</div><div class="k">휴가</div></div>
       </div>
       <div class="tl">
         ${entries.map((e) => {
@@ -847,12 +824,6 @@ $('name').addEventListener('change', () => {
   prefs.name = n; store.set('kd_prefs', prefs);
   loadFormForTarget();
 });
-$('statusSeg').onclick = (ev) => {
-  const b = ev.target.closest('button'); if (!b) return;
-  S.form.status = b.dataset.status;
-  if (formSource === 'saved') formSource = 'edited';
-  renderStatus(); renderFormState();
-};
 $('reason').onchange = () => {
   S.form.reason = $('reason').value;
   // 휴가류인데 시간이 비어 있으면 08:30~17:30 으로 채움
@@ -950,7 +921,6 @@ $('seedBtn').onclick = async () => {
     for (const n of names.slice(1)) {
       const r = rnd();
       if (r < 0.2) { const s = samples[Math.floor(rnd() * samples.length)]; await api.upsert({ date: t, name: `소령 ${n}`, status: 'absent', reason: s[0], times: s[1], updatedAt: now }); }
-      else if (r < 0.6) await api.upsert({ date: t, name: `소령 ${n}`, status: 'none', reason: '', times: '', updatedAt: now });
     }
   }
   await ensureMonths([monthKey(S.target), ...dashMonths()], true);

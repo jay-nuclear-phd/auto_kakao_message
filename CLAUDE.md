@@ -5,8 +5,9 @@
 
 ## 웹사이트 (docs/, apps_script/)
 - 사이트: https://jay-nuclear-phd.github.io/auto_kakao_message/ (repo jay-nuclear-phd/auto_kakao_message, main /docs)
+- 입력하는 사람은 모두 결강자라서 "결강 없음/결강" 선택은 없앴다. 저장은 항상 status=absent (서버는 none도 받지만 화면에서는 안 씀).
 - `docs/index.html`: 단일 파일 정적 사이트 (GitHub Pages가 `/docs`에서 서빙). **휴대폰 화면 우선** — 390px 폭에서 가로 넘침 없이 확인할 것.
-  - 위: 입력 (날짜 ◀▶, 이름, 결강 없음/결강, 사유 드롭다운+추가, 08:00~17:30 30분 칸을 하나씩 켜고 끄는 방식 — 떨어진 시간대 여러 개 가능)
+  - 위: 입력 (날짜 ◀▶, 이름, 사유 드롭다운+추가, 08:00~17:30 30분 칸을 하나씩 켜고 끄는 방식 — 떨어진 시간대 여러 개 가능)
   - 조사 중인 날짜가 아니면 입력이 잠기고 관리자 로그인 필요. 서버(Code.gs)에서도 검사한다. 관리자 아이디/비밀번호는 Apps Script **스크립트 속성**(ADMIN_ID, ADMIN_PW)에만 둔다 — 저장소가 공개라서 코드·문서에 비밀번호를 절대 쓰지 말 것.
   - 가운데: 카톡 보고 문구 (초안/최종 토글, 복사 버튼, 총원 수정)
   - 아래: 대시보드 일(타임라인)/주(사람×요일)/월(월~금 달력, 날짜 누르면 일간으로) (결강 시간 구간별 색: ≤1, ≤2, ≤4, <8, ≥8시간 — dataviz 검증된 파란 ordinal 램프)
@@ -24,7 +25,8 @@
 - WSL에서 `powershell.exe`로 Win32 API를 호출해 제어한다. 프로젝트 경로는 Windows에서 `C:\Users\staro\Github\auto_kakao_message`.
 - 사용자는 3반 소령 서정원. 단톡방 반장(소령 김주연)의 인원 종합 업무를 자동화하는 것이 목표.
 
-## 자동 보고 (automation/)
+## 자동 보고 (automation/) — **현재 꺼져 있음**
+- 2026-11-10 사용자 요청으로 작업 스케줄러 작업(KakaoReport\\Draft_1600, Final_0700)을 삭제했다. 코드는 남겨둠. 사용자가 다시 원하기 전에는 등록하지 말 것.
 - `automation/kakao_report.py --kind draft|final [--dry-run] [--room 방] [--date YYYY-MM-DD] [--force]`
   - Apps Script에서 데이터를 받아 문구를 만들고 `kakao_send.ps1`로 전송. 문구 규칙은 `docs/index.html`의 `buildMessage`와 **똑같아야 한다** (한쪽을 바꾸면 다른 쪽도 바꾸고, 사이트 `?demo`에 같은 데이터를 넣어 출력 비교).
   - draft = 다음 근무일, final = 오늘. 주말과 `skip_dates.txt`의 날짜는 보내지 않음.
