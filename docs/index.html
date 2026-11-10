@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2a78d6">
+<title>3반 결강 현황</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f3f4f6;
+  --card: #ffffff;
+  --surface-1: #fcfcfb;
+  --line: #e3e3df;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --accent: #2a78d6;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6f0fc;
+  --danger: #d03b3b;
+  --good: #0ca30c;
+  /* 결강 시간 구간 (ordinal, 검증 완료) */
+  --b0: #86b6ef; --b1: #5598e7; --b2: #2a78d6; --b3: #1c5cab; --b4: #0d366b;
+  --b0-ink: #0b0b0b; --b1-ink: #0b0b0b; --b2-ink: #ffffff; --b3-ink: #ffffff; --b4-ink: #ffffff;
+  --track: #ecebe7;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #111110;
+    --card: #1a1a19;
+    --surface-1: #1a1a19;
+    --line: #33332f;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --accent: #3987e5;
+    --accent-ink: #ffffff;
+    --accent-soft: #1d2b3d;
+    --danger: #e05656;
+    --b0: #184f95; --b1: #256abf; --b2: #3987e5; --b3: #6da7ec; --b4: #b7d3f6;
+    --b0-ink: #ffffff; --b1-ink: #ffffff; --b2-ink: #ffffff; --b3-ink: #0b0b0b; --b4-ink: #0b0b0b;
+    --track: #2a2a27;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  font-size: 16px; line-height: 1.45;
+  padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.top {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--bg); padding: 12px 16px 8px;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+}
+.top h1 { font-size: 18px; margin: 0; }
+.badge { font-size: 12px; color: var(--text-secondary); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+main { max-width: 560px; margin: 0 auto; padding: 0 12px; display: grid; gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-width: 0; }
+.card h2 { font-size: 16px; margin: 0 0 12px; }
+.field { display: grid; gap: 6px; margin-top: 16px; }
+.field > .label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+input[type=text], input[type=number], select {
+  width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--surface-1); font-size: 16px;
+}
+input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row { display: flex; gap: 8px; align-items: stretch; }
+.row > select, .row > input { flex: 1; }
+
+.datenav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.navbtn { width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-1); font-size: 24px; line-height: 1; flex: none; }
+.datelabel { text-align: center; flex: 1; }
+.datelabel .main { font-size: 20px; font-weight: 700; }
+.datelabel .sub { font-size: 13px; color: var(--text-secondary); }
+.datelabel .sub button { border: 0; background: none; color: var(--accent); padding: 0 0 0 4px; font-size: 13px; text-decoration: underline; }
+
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--track); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg button { min-height: 44px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; color: var(--text-secondary); }
+.seg button[aria-pressed=true] { background: var(--card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.seg.absent-on button[data-status=absent][aria-pressed=true] { background: var(--accent); color: var(--accent-ink); }
+.seg.small button { min-height: 36px; font-size: 14px; }
+
+.ghost { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-1); font-weight: 600; white-space: nowrap; }
+.primary { width: 100%; min-height: 52px; border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 17px; font-weight: 700; }
+.primary:disabled { opacity: .5; }
+.danger { color: var(--danger); }
+.actions { display: grid; gap: 8px; margin-top: 20px; }
+.hint { font-size: 13px; color: var(--text-secondary); }
+.subform { display: grid; gap: 8px; margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--accent-soft); }
+
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); font-size: 14px; }
+.blocks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; }
+.blk { min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-1); font-size: 14px; font-variant-numeric: tabular-nums; padding: 0; }
+.blk.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.blk.anchor { box-shadow: inset 0 0 0 3px var(--accent-soft); }
+.timetext { font-size: 15px; font-weight: 700; }
+
+.toast { min-height: 20px; font-size: 14px; font-weight: 600; color: var(--good); text-align: center; }
+.toast.err { color: var(--danger); }
+
+pre.msg {
+  white-space: pre-wrap; word-break: keep-all; margin: 12px 0; padding: 14px; border-radius: 12px;
+  background: var(--surface-1); border: 1px solid var(--line); font-family: inherit; font-size: 15px; line-height: 1.55;
+}
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.stat { background: var(--surface-1); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.stat .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 12px; color: var(--text-secondary); }
+.linkbtn { border: 0; background: none; color: var(--accent); padding: 0; text-decoration: underline; font-size: inherit; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 12px 0 4px; font-size: 12px; color: var(--text-secondary); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.sw { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.empty { padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 14px; }
+
+/* 일간 타임라인 */
+.tl { display: grid; gap: 10px; margin-top: 12px; }
+.tlrow { display: grid; grid-template-columns: 92px 1fr 40px; gap: 8px; align-items: center; }
+.tlname { font-size: 13px; line-height: 1.25; overflow: hidden; }
+.tlname small { display: block; color: var(--text-secondary); font-size: 11px; }
+.tltrack { position: relative; height: 24px; background: var(--track); border-radius: 6px; }
+.tlseg { position: absolute; top: 0; bottom: 0; border-radius: 6px; }
+.tlh { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.tlaxis { display: grid; grid-template-columns: 92px 1fr 40px; gap: 8px; font-size: 11px; color: var(--text-muted); }
+.tlaxis .ticks { position: relative; height: 14px; }
+.tlaxis .ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+
+/* 주/월 히트맵 */
+.hmwrap { overflow-x: auto; margin-top: 12px; -webkit-overflow-scrolling: touch; }
+table.hm { border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+table.hm th { font-weight: 600; color: var(--text-secondary); padding: 2px; }
+table.hm th.nm, table.hm td.nm { position: sticky; left: 0; background: var(--card); text-align: left; white-space: nowrap; padding-right: 6px; z-index: 1; font-weight: 500; color: var(--text-primary); }
+table.hm td.c { width: 40px; min-width: 40px; height: 32px; text-align: center; border-radius: 4px; background: var(--track); padding: 0; }
+table.hm.month td.c { width: 26px; min-width: 26px; height: 28px; font-size: 11px; }
+table.hm td.tot { padding: 0 4px 0 6px; text-align: right; font-weight: 700; white-space: nowrap; }
+table.hm td.c[data-tip] { cursor: pointer; }
+
+.tip { position: fixed; z-index: 20; max-width: 260px; background: var(--text-primary); color: var(--card); font-size: 13px; padding: 8px 10px; border-radius: 8px; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,.25); white-space: pre-line; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>26-3기 3반 결강 현황</h1>
+  <span class="badge" id="modeBadge"></span>
+</header>
+
+<main>
+  <!-- 1. 입력 -->
+  <section class="card" id="inputCard" aria-label="결강 입력">
+    <div class="datenav">
+      <button class="navbtn" id="prevDay" aria-label="이전 날짜">‹</button>
+      <div class="datelabel">
+        <div class="main" id="dateMain"></div>
+        <div class="sub" id="dateSub"></div>
+      </div>
+      <button class="navbtn" id="nextDay" aria-label="다음 날짜">›</button>
+    </div>
+
+    <label class="field">
+      <span class="label">이름</span>
+      <input type="text" id="name" placeholder="예: 소령 홍길동" list="nameList" autocomplete="off" enterkeyhint="done">
+    </label>
+    <datalist id="nameList"></datalist>
+
+    <div class="field">
+      <span class="label">결강 여부</span>
+      <div class="seg" id="statusSeg" role="radiogroup" aria-label="결강 여부">
+        <button type="button" data-status="none" aria-pressed="false">결강 없음</button>
+        <button type="button" data-status="absent" aria-pressed="false">결강</button>
+      </div>
+    </div>
+
+    <div id="absentFields" hidden>
+      <div class="field">
+        <span class="label">사유</span>
+        <div class="row">
+          <select id="reason" aria-label="결강 사유"></select>
+          <button type="button" class="ghost" id="addReasonBtn">+ 추가</button>
+        </div>
+        <div class="subform" id="addReasonForm" hidden>
+          <input type="text" id="newReason" placeholder="새 사유 (예: 병가)">
+          <div class="seg small" id="reasonTypeSeg">
+            <button type="button" data-rtype="leave" aria-pressed="true">휴가 (출근에서 제외)</button>
+            <button type="button" data-rtype="time" aria-pressed="false">시간 사용 (출근 유지)</button>
+          </div>
+          <div class="row">
+            <button type="button" class="ghost" id="cancelReason" style="flex:1">취소</button>
+            <button type="button" class="ghost" id="saveReason" style="flex:1;color:var(--accent)">추가하기</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label">결강 시간 <span class="hint" style="font-weight:400">— 시작 칸과 끝 칸을 차례로 누르세요</span></span>
+        <div class="presets" id="presets"></div>
+        <div class="blocks" id="blocks"></div>
+        <div class="timetext" id="timeText"></div>
+      </div>
+    </div>
+
+    <div class="field"><div class="hint" id="formState"></div></div>
+    <div class="actions">
+      <button type="button" class="primary" id="saveBtn">저장</button>
+      <button type="button" class="ghost danger" id="deleteBtn" hidden>이 날짜 내 입력 삭제</button>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- 2. 보고 문구 -->
+  <section class="card" id="copyCard" aria-label="카톡 보고 문구">
+    <h2>카톡 보고 문구 <span class="hint" id="copyDate" style="font-weight:400"></span></h2>
+    <div class="seg small" id="kindSeg">
+      <button type="button" data-kind="draft" aria-pressed="false">초안 (전날 16시)</button>
+      <button type="button" data-kind="final" aria-pressed="false">최종 (당일 07시)</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <pre class="msg" id="msg"></pre>
+    <button type="button" class="primary" id="copyBtn">복사하기</button>
+    <div class="toast" id="copyToast" role="status" aria-live="polite"></div>
+    <div class="hint">총원 <button type="button" class="linkbtn" id="totalBtn"></button>
+      <span id="totalEdit" hidden> <input type="number" id="totalInput" min="1" max="200" style="width:90px;min-height:36px;display:inline-block"> <button type="button" class="linkbtn" id="totalSave">저장</button></span>
+    </div>
+  </section>
+
+  <!-- 3. 대시보드 -->
+  <section class="card" id="dashCard" aria-label="대시보드">
+    <h2>대시보드</h2>
+    <div class="seg" id="viewSeg">
+      <button type="button" data-view="day" aria-pressed="true">일</button>
+      <button type="button" data-view="week" aria-pressed="false">주</button>
+      <button type="button" data-view="month" aria-pressed="false">월</button>
+    </div>
+    <div class="datenav" style="margin-top:12px">
+      <button class="navbtn" id="prevPeriod" aria-label="이전 기간">‹</button>
+      <div class="datelabel"><div class="main" id="periodText" style="font-size:17px"></div></div>
+      <button class="navbtn" id="nextPeriod" aria-label="다음 기간">›</button>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div id="dashBody"></div>
+    <div id="demoTools" hidden style="margin-top:16px">
+      <button type="button" class="ghost" id="seedBtn" style="width:100%">미리보기용 샘플 데이터 넣기</button>
+    </div>
+  </section>
+</main>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+/* ================= 설정 ================= */
+const CONFIG = {
+  // Google Apps Script 웹앱 배포 URL. 비워두면 이 기기에만 저장되는 미리보기 모드.
+  API_URL: '',
+  UNIT: '3반',
+  DEFAULT_TOTAL: 45,
+};
+const DEFAULT_REASONS = [
+  { name: '육아시간', type: 'time' },
+  { name: '청원휴가', type: 'leave' },
+  { name: '자녀돌봄', type: 'leave' },
+];
+// 보고 문구에 항상(0명이어도) 나오는 시간 사용 항목
+const FIXED_TIME_ITEMS = ['육아시간', '모성보호시간'];
+const DAY_START = 8 * 60, DAY_END = 17 * 60 + 30, SLOT = 30;
+const NSLOTS = (DAY_END - DAY_START) / SLOT; // 19
+const RANKS = '소위|중위|대위|소령|중령|대령|준장|준위|원사|상사|중사|하사|군무원';
+const BINS = [
+  { max: 1, label: '1시간 이하' },
+  { max: 2, label: '1~2시간' },
+  { max: 4, label: '2~4시간' },
+  { max: 7.99, label: '4~8시간' },
+  { max: Infinity, label: '8시간 이상' },
+];
+
+/* ================= 유틸 ================= */
+const $ = (id) => document.getElementById(id);
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+const pad = (n) => String(n).padStart(2, '0');
+const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+const isWeekend = (s) => { const w = parseYmd(s).getDay(); return w === 0 || w === 6; };
+const nextWeekday = (s, dir) => { let t = addDays(s, dir); while (isWeekend(t)) t = addDays(t, dir); return t; };
+const shortDate = (s) => { const d = parseYmd(s); return `${d.getMonth() + 1}.${d.getDate()}.(${WD[d.getDay()]})`; };
+const reportDate = (s) => { const d = parseYmd(s); return `'${String(d.getFullYear()).slice(2)}.${d.getMonth() + 1}.${d.getDate()}.(${WD[d.getDay()]})`; };
+const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const fromMin = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const slotStart = (i) => DAY_START + i * SLOT;
+const hoursOf = (e) => (e.status === 'absent' && e.start && e.end) ? (toMin(e.end) - toMin(e.start)) / 60 : 0;
+const fmtH = (h) => (Math.round(h * 10) / 10).toString();
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const binOf = (h) => h <= 0 ? -1 : BINS.findIndex((b) => h <= b.max);
+const todayStr = () => ymd(new Date());
+
+function normName(raw) {
+  let s = (raw || '').trim().replace(/\s+/g, ' ');
+  if (!s) return '';
+  const m = s.match(new RegExp(`^(${RANKS})\\s*(.+)$`));
+  if (m) return `${m[1]} ${m[2]}`;
+  return `소령 ${s}`;
+}
+// 정오 이전이면 오늘, 정오 이후면 다음 날. 주말이면 다음 평일.
+function defaultTarget(now = new Date()) {
+  let t = ymd(now);
+  if (now.getHours() >= 12) t = addDays(t, 1);
+  while (isWeekend(t)) t = addDays(t, 1);
+  return t;
+}
+const store = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+/* ================= 데이터 계층 ================= */
+function localApi() {
+  const KEY = 'kd_demo_db';
+  const load = () => store.get(KEY, { entries: [], reasons: [], total: CONFIG.DEFAULT_TOTAL });
+  const save = (db) => store.set(KEY, db);
+  return {
+    demo: true,
+    async list(from, to) {
+      const db = load();
+      return { entries: db.entries.filter((e) => e.date >= from && e.date <= to), config: { reasons: db.reasons, total: db.total } };
+    },
+    async upsert(entry) {
+      const db = load();
+      db.entries = db.entries.filter((e) => !(e.date === entry.date && e.name === entry.name));
+      db.entries.push(entry); save(db);
+    },
+    async remove(date, name) {
+      const db = load(); db.entries = db.entries.filter((e) => !(e.date === date && e.name === name)); save(db);
+    },
+    async addReason(r) { const db = load(); if (!db.reasons.some((x) => x.name === r.name)) db.reasons.push(r); save(db); },
+    async setTotal(n) { const db = load(); db.total = n; save(db); },
+  };
+}
+function remoteApi(url) {
+  async function post(payload) {
+    // text/plain 으로 보내야 Apps Script에서 CORS preflight 없이 동작
+    const r = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || '저장 실패');
+    return j;
+  }
+  return {
+    demo: false,
+    async list(from, to) {
+      const r = await fetch(`${url}?action=list&from=${from}&to=${to}`);
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || '불러오기 실패');
+      return j;
+    },
+    upsert: (entry) => post({ action: 'upsert', entry }),
+    remove: (date, name) => post({ action: 'remove', date, name }),
+    addReason: (reason) => post({ action: 'addReason', reason }),
+    setTotal: (total) => post({ action: 'setTotal', total }),
+  };
+}
+const api = CONFIG.API_URL ? remoteApi(CONFIG.API_URL) : localApi();
+
+/* ================= 상태 ================= */
+const prefs = store.get('kd_prefs', {});
+const S = {
+  target: defaultTarget(),
+  userNavigated: false,
+  view: store.get('kd_view', 'day'),
+  anchor: null,
+  months: {},             // 'YYYY-MM' -> entries[]
+  reasons: DEFAULT_REASONS.slice(),
+  total: CONFIG.DEFAULT_TOTAL,
+  form: { status: 'none', reason: '육아시간', s: null, e: null },
+  pendingEnd: false,
+  kind: null,             // 사용자가 직접 고른 문구 종류 (없으면 자동)
+  newReasonType: 'leave',
+};
+S.anchor = S.target;
+
+const monthKey = (s) => s.slice(0, 7);
+function monthRange(key) {
+  const [y, m] = key.split('-').map(Number);
+  return [`${key}-01`, ymd(new Date(y, m, 0))];
+}
+async function ensureMonths(keys, force = false) {
+  const need = [...new Set(keys)].filter((k) => force || !S.months[k]);
+  await Promise.all(need.map(async (k) => {
+    const [from, to] = monthRange(k);
+    const res = await api.list(from, to);
+    S.months[k] = res.entries || [];
+    if (res.config) {
+      const extra = (res.config.reasons || []).filter((r) => !DEFAULT_REASONS.some((d) => d.name === r.name));
+      S.reasons = DEFAULT_REASONS.concat(extra);
+      if (res.config.total) S.total = Number(res.config.total);
+    }
+  }));
+}
+const entriesOn = (date) => (S.months[monthKey(date)] || []).filter((e) => e.date === date);
+function entriesBetween(from, to) {
+  const out = [];
+  for (const k of Object.keys(S.months)) for (const e of S.months[k]) if (e.date >= from && e.date <= to) out.push(e);
+  return out;
+}
+const reasonType = (name) => (S.reasons.find((r) => r.name === name) || { type: 'time' }).type;
+
+/* ================= 입력 폼 ================= */
+function renderDateNav() {
+  $('dateMain').textContent = `${shortDate(S.target)} 현황`;
+  const t = todayStr();
+  const rel = S.target === t ? '오늘' : S.target > t ? (S.target === nextWeekday(t, 1) ? '다음 근무일' : '미리 입력') : '지난 날짜';
+  const isDefault = S.target === defaultTarget();
+  $('dateSub').innerHTML = `${rel}${isDefault ? ' · 지금 조사 중' : ' <button type="button" id="backToDefault">지금 조사 중인 날짜로</button>'}`;
+  const b = $('backToDefault');
+  if (b) b.onclick = () => { S.userNavigated = false; setTarget(defaultTarget()); };
+}
+
+function renderReasons() {
+  const sel = $('reason');
+  const cur = S.form.reason;
+  sel.innerHTML = S.reasons.map((r) => `<option value="${esc(r.name)}">${esc(r.name)}${r.type === 'leave' ? ' (휴가)' : ''}</option>`).join('');
+  if (S.reasons.some((r) => r.name === cur)) sel.value = cur; else { S.form.reason = S.reasons[0].name; sel.value = S.form.reason; }
+}
+
+const PRESETS = [
+  { label: '종일 08:30~17:30', s: '08:30', e: '17:30' },
+  { label: '오전 08:30~12:00', s: '08:30', e: '12:00' },
+  { label: '오후 13:00~17:30', s: '13:00', e: '17:30' },
+  { label: '15:30~17:30', s: '15:30', e: '17:30' },
+];
+function renderPresets() {
+  $('presets').innerHTML = PRESETS.map((p, i) => `<button type="button" data-p="${i}">${p.label}</button>`).join('');
+}
+function renderBlocks() {
+  const { s, e } = S.form;
+  let html = '';
+  for (let i = 0; i < NSLOTS; i++) {
+    const on = s !== null && i >= s && i <= (e ?? s);
+    const anchor = S.pendingEnd && i === s;
+    html += `<button type="button" class="blk${on ? ' on' : ''}${anchor ? ' anchor' : ''}" data-i="${i}" aria-pressed="${on}" aria-label="${fromMin(slotStart(i))}부터 30분">${fromMin(slotStart(i)).replace(/^0/, '')}</button>`;
+  }
+  $('blocks').innerHTML = html;
+  if (s === null) { $('timeText').textContent = '시간을 선택하세요'; return; }
+  const st = fromMin(slotStart(s)), en = fromMin(slotStart((e ?? s) + 1));
+  const h = ((e ?? s) - s + 1) * 0.5;
+  $('timeText').textContent = `${st} ~ ${en} (${fmtH(h)}시간)${S.pendingEnd ? ' · 끝 칸을 누르면 범위 선택' : ''}`;
+}
+function setFormTimes(start, end) {
+  if (!start || !end) { S.form.s = S.form.e = null; return; }
+  const s = (toMin(start) - DAY_START) / SLOT;
+  const e = (toMin(end) - DAY_START) / SLOT - 1;
+  if (s >= 0 && e < NSLOTS && e >= s) { S.form.s = s; S.form.e = e; } else { S.form.s = S.form.e = null; }
+}
+function formTimes() {
+  const { s, e } = S.form;
+  if (s === null) return { start: '', end: '' };
+  return { start: fromMin(slotStart(s)), end: fromMin(slotStart((e ?? s) + 1)) };
+}
+
+function renderStatus() {
+  const absent = S.form.status === 'absent';
+  document.querySelectorAll('#statusSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.status === S.form.status)));
+  $('statusSeg').classList.toggle('absent-on', absent);
+  $('absentFields').hidden = !absent;
+}
+
+let formSource = 'new';
+function loadFormForTarget() {
+  const name = normName($('name').value);
+  const existing = name ? entriesOn(S.target).find((e) => e.name === name) : null;
+  S.pendingEnd = false;
+  if (existing) {
+    S.form.status = existing.status;
+    if (existing.reason) S.form.reason = existing.reason;
+    setFormTimes(existing.start, existing.end);
+    formSource = 'saved';
+  } else {
+    S.form.status = prefs.status || 'none';
+    S.form.reason = prefs.reason || '육아시간';
+    setFormTimes(prefs.start, prefs.end);
+    formSource = prefs.status ? 'prefs' : 'new';
+  }
+  renderForm();
+}
+function renderFormState() {
+  const name = normName($('name').value);
+  const el = $('formState');
+  $('deleteBtn').hidden = formSource !== 'saved';
+  if (!name) { el.textContent = '이름을 입력하세요.'; return; }
+  if (formSource === 'saved') el.innerHTML = `✅ <b>${esc(name)}</b> · 이 날짜에 저장된 내용입니다. 바꾸면 다시 저장하세요.`;
+  else if (formSource === 'prefs') el.innerHTML = `📝 <b>${esc(name)}</b> · 지난번 입력으로 채웠어요. <b>아직 저장 안 됨</b>`;
+  else el.innerHTML = `📝 <b>${esc(name)}</b> · 아직 저장 안 됨`;
+}
+function renderForm() {
+  renderDateNav(); renderStatus(); renderReasons(); renderBlocks(); renderFormState();
+}
+
+function toast(id, text, err = false) {
+  const el = $(id); el.textContent = text; el.classList.toggle('err', err);
+  clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = ''; }, 2500);
+}
+
+async function save() {
+  const name = normName($('name').value);
+  if (!name) { toast('toast', '이름을 입력하세요', true); $('name').focus(); return; }
+  $('name').value = name;
+  const entry = { date: S.target, name, status: S.form.status, reason: '', start: '', end: '', updatedAt: new Date().toISOString() };
+  if (S.form.status === 'absent') {
+    const t = formTimes();
+    if (!t.start) { toast('toast', '결강 시간을 선택하세요', true); return; }
+    Object.assign(entry, { reason: S.form.reason, ...t });
+  }
+  $('saveBtn').disabled = true;
+  try {
+    await api.upsert(entry);
+    const k = monthKey(entry.date);
+    S.months[k] = (S.months[k] || []).filter((e) => !(e.date === entry.date && e.name === name)).concat(entry);
+    Object.assign(prefs, { name, status: entry.status, reason: entry.reason || prefs.reason, start: entry.start || prefs.start, end: entry.end || prefs.end });
+    store.set('kd_prefs', prefs);
+    formSource = 'saved';
+    toast('toast', '저장됐어요 ✓');
+    renderAll();
+  } catch (err) {
+    toast('toast', `저장 실패: ${err.message}`, true);
+  } finally { $('saveBtn').disabled = false; }
+}
+async function removeMine() {
+  const name = normName($('name').value);
+  if (!name) return;
+  try {
+    await api.remove(S.target, name);
+    const k = monthKey(S.target);
+    S.months[k] = (S.months[k] || []).filter((e) => !(e.date === S.target && e.name === name));
+    formSource = 'prefs';
+    toast('toast', '삭제했어요');
+    renderAll();
+  } catch (err) { toast('toast', `삭제 실패: ${err.message}`, true); }
+}
+
+async function setTarget(t) {
+  S.target = t;
+  S.anchor = t;
+  renderDateNav();
+  try { await ensureMonths([monthKey(t), ...dashMonths()]); } catch (err) { toast('toast', `불러오기 실패: ${err.message}`, true); }
+  loadFormForTarget();
+  renderAll();
+}
+
+/* ================= 보고 문구 ================= */
+const LETTERS = '가나다라마바사아자차카타파하';
+const byTimeName = (a, b) => (a.start || '').localeCompare(b.start || '') || a.name.localeCompare(b.name, 'ko');
+function buildMessage(date, kind) {
+  const all = entriesOn(date);
+  const absent = all.filter((e) => e.status === 'absent');
+  const leave = absent.filter((e) => reasonType(e.reason) === 'leave').sort(byTimeName);
+  const groups = new Map(FIXED_TIME_ITEMS.map((n) => [n, []]));
+  absent.filter((e) => reasonType(e.reason) !== 'leave').forEach((e) => {
+    if (!groups.has(e.reason)) groups.set(e.reason, []);
+    groups.get(e.reason).push(e);
+  });
+  const total = S.total;
+  const items = [];
+  items.push(`출근현황 : 총원 ${total}명, ${leave.length ? `휴가 ${leave.length}명, ` : ''}출근 ${total - leave.length}명`);
+  if (leave.length) {
+    const cnt = new Map();
+    leave.forEach((e) => cnt.set(e.reason, (cnt.get(e.reason) || 0) + 1));
+    const rtxt = cnt.size === 1 ? [...cnt.keys()][0] : [...cnt].map(([r, n]) => `${r} ${n}`).join(', ');
+    const multi = cnt.size > 1;
+    items.push([`휴가 : ${leave.length}명(${rtxt})`, ...leave.map((e) => ` * ${e.name}(${multi ? e.reason + ' ' : ''}${e.start}~${e.end})`)].join('\n'));
+  }
+  for (const [r, list] of groups) {
+    list.sort(byTimeName);
+    items.push([`${r} : ${list.length}명`, ...list.map((e) => ` * ${e.name}(${e.start}~${e.end})`)].join('\n'));
+  }
+  items.push('건강상태 : 이상무');
+  const body = `${reportDate(date)}  <${CONFIG.UNIT}>\n` + items.map((t, i) => `${LETTERS[i]}. ${t}`).join('\n');
+  if (kind === 'draft') return `내일 출근현황 종합하겠습니다!\n\n${body}\n\n의견부탁드립니다!`;
+  return `${body}\n\n이상없으면 위에 현황으로 보고하겠습니다!`;
+}
+function autoKind(date) { return date > todayStr() ? 'draft' : 'final'; }
+function renderMessage() {
+  const kind = S.kind || autoKind(S.target);
+  document.querySelectorAll('#kindSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
+  $('copyDate').textContent = `· ${shortDate(S.target)}`;
+  $('msg').textContent = buildMessage(S.target, kind);
+  const all = entriesOn(S.target);
+  const absent = all.filter((e) => e.status === 'absent');
+  const leaveN = absent.filter((e) => reasonType(e.reason) === 'leave').length;
+  $('stats').innerHTML = [
+    [all.length, `응답 / ${S.total}명`],
+    [absent.length, '결강'],
+    [S.total - leaveN, '출근'],
+  ].map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
+  $('totalBtn').textContent = `${S.total}명 (수정)`;
+}
+async function copyMsg() {
+  const text = $('msg').textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand && document.execCommand('copy');
+    ta.remove();
+    if (!ok) { toast('copyToast', '복사 실패 — 문구를 길게 눌러 직접 복사하세요', true); return; }
+  }
+  toast('copyToast', '복사됐어요. 카톡에 붙여넣으세요 ✓');
+}
+
+/* ================= 대시보드 ================= */
+function weekStart(s) { const d = parseYmd(s); const w = d.getDay(); d.setDate(d.getDate() - ((w + 6) % 7)); return ymd(d); }
+function periodDays() {
+  if (S.view === 'day') return [S.anchor];
+  if (S.view === 'week') { const m = weekStart(S.anchor); return [0, 1, 2, 3, 4].map((i) => addDays(m, i)); }
+  const [from, to] = monthRange(monthKey(S.anchor));
+  const out = []; for (let t = from; t <= to; t = addDays(t, 1)) if (!isWeekend(t)) out.push(t);
+  return out;
+}
+function dashMonths() { return periodDays().map(monthKey); }
+function renderLegend() {
+  $('legend').innerHTML = BINS.map((b, i) => `<span><i class="sw" style="background:var(--b${i})"></i>${b.label}</span>`).join('');
+}
+function periodLabel(days) {
+  if (S.view === 'day') return shortDate(days[0]);
+  if (S.view === 'week') return `${shortDate(days[0])} ~ ${shortDate(days[days.length - 1])}`;
+  const d = parseYmd(S.anchor); return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+}
+function tipFor(e) {
+  return `${e.name}\n${shortDate(e.date)} · ${e.reason}\n${e.start}~${e.end} (${fmtH(hoursOf(e))}시간)`;
+}
+function renderDash() {
+  document.querySelectorAll('#viewSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
+  const days = periodDays();
+  $('periodText').textContent = periodLabel(days);
+  const entries = entriesBetween(days[0], days[days.length - 1]).filter((e) => e.status === 'absent' && days.includes(e.date));
+  const body = $('dashBody');
+  if (!entries.length) { body.innerHTML = `<div class="empty">이 기간에는 결강이 없어요</div>`; return; }
+
+  if (S.view === 'day') {
+    entries.sort(byTimeName);
+    const total = entries.reduce((a, e) => a + hoursOf(e), 0);
+    const span = DAY_END - DAY_START;
+    const ticks = [8, 10, 12, 14, 16].map((h) => `<span style="left:${((h * 60 - DAY_START) / span) * 100}%">${h}시</span>`).join('');
+    body.innerHTML = `
+      <div class="stats" style="margin-top:12px">
+        <div class="stat"><div class="v">${entries.length}</div><div class="k">결강 인원</div></div>
+        <div class="stat"><div class="v">${fmtH(total)}</div><div class="k">총 결강 시간</div></div>
+        <div class="stat"><div class="v">${entriesOn(days[0]).length}</div><div class="k">응답</div></div>
+      </div>
+      <div class="tl">
+        ${entries.map((e) => {
+          const h = hoursOf(e), b = binOf(h);
+          const left = ((toMin(e.start) - DAY_START) / span) * 100;
+          const width = ((toMin(e.end) - toMin(e.start)) / span) * 100;
+          return `<div class="tlrow">
+            <div class="tlname">${esc(e.name.replace(/^\S+\s/, ''))}<small>${esc(e.reason)}</small></div>
+            <div class="tltrack" data-tip="${esc(tipFor(e))}"><div class="tlseg" style="left:${left}%;width:calc(${width}% - 2px);background:var(--b${b})"></div></div>
+            <div class="tlh">${fmtH(h)}h</div>
+          </div>`;
+        }).join('')}
+        <div class="tlaxis"><span></span><div class="ticks">${ticks}</div><span></span></div>
+      </div>`;
+    return;
+  }
+
+  // 주 / 월: 사람 × 날짜 히트맵
+  const people = new Map();
+  for (const e of entries) {
+    if (!people.has(e.name)) people.set(e.name, { name: e.name, total: 0, byDate: {} });
+    const p = people.get(e.name);
+    p.byDate[e.date] = e; p.total += hoursOf(e);
+  }
+  const rows = [...people.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'ko'));
+  const month = S.view === 'month';
+  const head = days.map((d) => {
+    const dt = parseYmd(d);
+    return `<th>${month ? dt.getDate() : `${WD[dt.getDay()]}<br>${dt.getMonth() + 1}.${dt.getDate()}`}</th>`;
+  }).join('');
+  const sum = rows.reduce((a, p) => a + p.total, 0);
+  body.innerHTML = `
+    <div class="hint" style="margin-top:12px">결강 ${rows.length}명 · 총 ${fmtH(sum)}시간${month ? ' · 옆으로 밀어서 보기' : ''}</div>
+    <div class="hmwrap"><table class="hm${month ? ' month' : ''}">
+      <thead><tr><th class="nm">이름</th>${head}<th>합계</th></tr></thead>
+      <tbody>${rows.map((p) => `<tr>
+        <td class="nm">${esc(p.name.replace(/^\S+\s/, ''))}</td>
+        ${days.map((d) => {
+          const e = p.byDate[d];
+          if (!e) return '<td class="c"></td>';
+          const h = hoursOf(e), b = binOf(h);
+          return `<td class="c" data-tip="${esc(tipFor(e))}" style="background:var(--b${b});color:var(--b${b}-ink)">${month ? '' : fmtH(h)}</td>`;
+        }).join('')}
+        <td class="tot">${fmtH(p.total)}h</td></tr>`).join('')}
+      </tbody></table></div>`;
+}
+
+/* 툴팁: 마우스는 hover, 터치는 탭 */
+const tip = $('tip');
+function showTip(el, x, y) {
+  tip.textContent = el.dataset.tip; tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  let left = Math.min(Math.max(8, x - r.width / 2), innerWidth - r.width - 8);
+  let top = y - r.height - 12; if (top < 8) top = y + 16;
+  tip.style.left = `${left}px`; tip.style.top = `${top}px`;
+}
+document.addEventListener('pointerover', (ev) => {
+  if (ev.pointerType !== 'mouse') return;
+  const el = ev.target.closest('[data-tip]');
+  if (el) showTip(el, ev.clientX, ev.clientY); else tip.hidden = true;
+});
+document.addEventListener('pointermove', (ev) => {
+  if (ev.pointerType === 'mouse' && !tip.hidden && ev.target.closest('[data-tip]')) showTip(ev.target.closest('[data-tip]'), ev.clientX, ev.clientY);
+});
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-tip]');
+  if (el) { const r = el.getBoundingClientRect(); showTip(el, r.left + r.width / 2, r.top); } else tip.hidden = true;
+});
+addEventListener('scroll', () => { tip.hidden = true; }, { passive: true, capture: true });
+
+/* ================= 이벤트 ================= */
+function renderAll() {
+  renderForm(); renderMessage(); renderDash(); renderNameList();
+}
+function renderNameList() {
+  const names = new Set();
+  Object.values(S.months).forEach((list) => list.forEach((e) => names.add(e.name)));
+  $('nameList').innerHTML = [...names].sort((a, b) => a.localeCompare(b, 'ko')).map((n) => `<option value="${esc(n)}">`).join('');
+}
+
+$('prevDay').onclick = () => { S.userNavigated = true; setTarget(nextWeekday(S.target, -1)); };
+$('nextDay').onclick = () => { S.userNavigated = true; setTarget(nextWeekday(S.target, 1)); };
+$('name').addEventListener('change', () => {
+  const n = normName($('name').value);
+  $('name').value = n;
+  prefs.name = n; store.set('kd_prefs', prefs);
+  loadFormForTarget();
+});
+$('statusSeg').onclick = (ev) => {
+  const b = ev.target.closest('button'); if (!b) return;
+  S.form.status = b.dataset.status;
+  if (formSource === 'saved') formSource = 'edited';
+  renderStatus(); renderFormState();
+};
+$('reason').onchange = () => {
+  S.form.reason = $('reason').value;
+  // 휴가류인데 시간이 비어 있으면 종일로 채움
+  if (reasonType(S.form.reason) === 'leave' && S.form.s === null) { setFormTimes('08:30', '17:30'); renderBlocks(); }
+};
+$('presets').onclick = (ev) => {
+  const b = ev.target.closest('button'); if (!b) return;
+  const p = PRESETS[Number(b.dataset.p)];
+  setFormTimes(p.s, p.e); S.pendingEnd = false; renderBlocks();
+};
+$('blocks').onclick = (ev) => {
+  const b = ev.target.closest('.blk'); if (!b) return;
+  const i = Number(b.dataset.i);
+  if (S.pendingEnd && S.form.s !== null) {
+    const a = S.form.s; S.form.s = Math.min(a, i); S.form.e = Math.max(a, i); S.pendingEnd = false;
+  } else {
+    S.form.s = i; S.form.e = i; S.pendingEnd = true;
+  }
+  renderBlocks();
+};
+$('addReasonBtn').onclick = () => { $('addReasonForm').hidden = false; $('newReason').focus(); };
+$('cancelReason').onclick = () => { $('addReasonForm').hidden = true; $('newReason').value = ''; };
+$('reasonTypeSeg').onclick = (ev) => {
+  const b = ev.target.closest('button'); if (!b) return;
+  S.newReasonType = b.dataset.rtype;
+  document.querySelectorAll('#reasonTypeSeg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+};
+$('saveReason').onclick = async () => {
+  const name = $('newReason').value.trim();
+  if (!name) return;
+  const r = { name, type: S.newReasonType };
+  try {
+    await api.addReason(r);
+    if (!S.reasons.some((x) => x.name === name)) S.reasons.push(r);
+    S.form.reason = name;
+    $('addReasonForm').hidden = true; $('newReason').value = '';
+    renderReasons(); renderMessage();
+    toast('toast', `사유 '${name}' 추가됨`);
+  } catch (err) { toast('toast', `추가 실패: ${err.message}`, true); }
+};
+$('saveBtn').onclick = save;
+$('deleteBtn').onclick = removeMine;
+$('kindSeg').onclick = (ev) => { const b = ev.target.closest('button'); if (!b) return; S.kind = b.dataset.kind; renderMessage(); };
+$('copyBtn').onclick = copyMsg;
+$('totalBtn').onclick = () => { $('totalEdit').hidden = false; $('totalInput').value = S.total; $('totalInput').focus(); };
+$('totalSave').onclick = async () => {
+  const n = Number($('totalInput').value);
+  if (!(n > 0)) return;
+  try { await api.setTotal(n); S.total = n; $('totalEdit').hidden = true; renderAll(); }
+  catch (err) { toast('copyToast', `저장 실패: ${err.message}`, true); }
+};
+$('viewSeg').onclick = async (ev) => {
+  const b = ev.target.closest('button'); if (!b) return;
+  S.view = b.dataset.view; store.set('kd_view', S.view);
+  await ensureMonths(dashMonths()).catch(() => {});
+  renderDash();
+};
+async function movePeriod(dir) {
+  if (S.view === 'day') S.anchor = nextWeekday(S.anchor, dir);
+  else if (S.view === 'week') S.anchor = addDays(weekStart(S.anchor), dir * 7);
+  else { const d = parseYmd(S.anchor); S.anchor = ymd(new Date(d.getFullYear(), d.getMonth() + dir, 1)); }
+  await ensureMonths(dashMonths()).catch(() => {});
+  renderDash();
+}
+$('prevPeriod').onclick = () => movePeriod(-1);
+$('nextPeriod').onclick = () => movePeriod(1);
+
+/* 미리보기용 샘플 데이터 */
+$('seedBtn').onclick = async () => {
+  const names = ['서정원', '김병준', '홍진표', '손영주', '최창훈', '김주연', '이민수', '박지훈'];
+  const samples = [['육아시간', '15:30', '17:30'], ['청원휴가', '08:30', '17:30'], ['자녀돌봄', '13:00', '17:30'], ['육아시간', '16:30', '17:30'], ['자녀돌봄', '08:30', '12:00']];
+  const [from] = monthRange(monthKey(S.target));
+  let seed = 7;
+  const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  for (let t = from; t <= addDays(S.target, 5); t = addDays(t, 1)) {
+    if (isWeekend(t)) continue;
+    await api.upsert({ date: t, name: '소령 서정원', status: 'absent', reason: '육아시간', start: '15:30', end: '17:30', updatedAt: new Date().toISOString() });
+    for (const n of names.slice(1)) {
+      const r = rnd();
+      if (r < 0.15) { const s = samples[Math.floor(rnd() * samples.length)]; await api.upsert({ date: t, name: `소령 ${n}`, status: 'absent', reason: s[0], start: s[1], end: s[2], updatedAt: new Date().toISOString() }); }
+      else if (r < 0.6) await api.upsert({ date: t, name: `소령 ${n}`, status: 'none', reason: '', start: '', end: '', updatedAt: new Date().toISOString() });
+    }
+  }
+  await ensureMonths([monthKey(S.target), ...dashMonths()], true);
+  loadFormForTarget(); renderAll();
+};
+
+/* 정오가 지나면 조사 날짜 자동 변경 */
+setInterval(() => {
+  if (S.userNavigated) return;
+  const t = defaultTarget();
+  if (t !== S.target) setTarget(t);
+}, 60 * 1000);
+
+/* ================= 시작 ================= */
+(async function init() {
+  $('modeBadge').textContent = api.demo ? '미리보기 · 이 기기에만 저장' : '공유 저장';
+  $('demoTools').hidden = !api.demo;
+  if (prefs.name) $('name').value = prefs.name;
+  renderPresets(); renderLegend();
+  renderDateNav();
+  try { await ensureMonths([monthKey(S.target), ...dashMonths()]); }
+  catch (err) { toast('toast', `불러오기 실패: ${err.message}`, true); }
+  loadFormForTarget();
+  renderAll();
+})();
+</script>
+</body>
+</html>
