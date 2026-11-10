@@ -4,6 +4,7 @@
 > 카톡 제어 스크립트(`kakao_*.ps1`)는 보조 도구로 남겨둔다. 감시 방식은 WinEvent 훅으로 시도했으나 대화 목록이 새 메시지에 이벤트를 내지 않아 보류.
 
 ## 웹사이트 (docs/, apps_script/)
+- 사이트: https://jay-nuclear-phd.github.io/auto_kakao_message/ (repo jay-nuclear-phd/auto_kakao_message, main /docs)
 - `docs/index.html`: 단일 파일 정적 사이트 (GitHub Pages가 `/docs`에서 서빙). **휴대폰 화면 우선** — 390px 폭에서 가로 넘침 없이 확인할 것.
   - 위: 입력 (날짜 ◀▶, 이름, 결강 없음/결강, 사유 드롭다운+추가, 08:00~17:30 30분 블록 선택)
   - 가운데: 카톡 보고 문구 (초안/최종 토글, 복사 버튼, 총원 수정)
@@ -12,6 +13,7 @@
   - 이전 입력은 기기의 localStorage(`kd_prefs`)에 기억. IP 기반은 쓰지 않음 (같은 Wi-Fi면 IP가 같아 남의 입력이 채워짐 + Apps Script는 IP를 알 수 없음).
   - 이름에 계급이 없으면 `소령 `을 자동으로 붙인다.
   - `CONFIG.API_URL`이 비어 있으면 미리보기 모드(이 기기에만 저장, 샘플 데이터 버튼 표시).
+- 사유 유형: 청원휴가=휴가(출근에서 제외), 육아시간·자녀돌봄=시간 사용(출근 유지). 최종 문구에서는 0명인 시간 사용 항목 생략, 초안에는 육아시간·모성보호시간 항상 표시.
 - `apps_script/Code.gs`: 구글 시트에 붙여 웹앱으로 배포하는 저장 API. GET `?action=list&from&to`, POST(text/plain JSON) `upsert/remove/addReason/setTotal`. 시트의 날짜/시간 열은 텍스트 서식(`@`)으로 고정.
 - 로컬 미리보기: `cd docs && python3 -m http.server 8765` 후 Playwright로 390x844 확인.
 

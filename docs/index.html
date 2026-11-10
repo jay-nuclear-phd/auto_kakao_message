@@ -257,14 +257,14 @@ table.hm td.c[data-tip] { cursor: pointer; }
 /* ================= 설정 ================= */
 const CONFIG = {
   // Google Apps Script 웹앱 배포 URL. 비워두면 이 기기에만 저장되는 미리보기 모드.
-  API_URL: '',
+  API_URL: 'https://script.google.com/macros/s/AKfycbyKcIBPmcF_OE_hZ73SgueJFD8OhJQbQwUKRLHX4FDdvIIRkSdg8QjR5ltBa6ILh6Fn/exec',
   UNIT: '3반',
   DEFAULT_TOTAL: 45,
 };
 const DEFAULT_REASONS = [
   { name: '육아시간', type: 'time' },
   { name: '청원휴가', type: 'leave' },
-  { name: '자녀돌봄', type: 'leave' },
+  { name: '자녀돌봄', type: 'time' },
 ];
 // 보고 문구에 항상(0명이어도) 나오는 시간 사용 항목
 const FIXED_TIME_ITEMS = ['육아시간', '모성보호시간'];
@@ -573,6 +573,7 @@ function buildMessage(date, kind) {
     items.push([`휴가 : ${leave.length}명(${rtxt})`, ...leave.map((e) => ` * ${e.name}(${multi ? e.reason + ' ' : ''}${e.start}~${e.end})`)].join('\n'));
   }
   for (const [r, list] of groups) {
+    if (kind === 'final' && !list.length) continue; // 최종 문구에서는 0명 항목 생략
     list.sort(byTimeName);
     items.push([`${r} : ${list.length}명`, ...list.map((e) => ` * ${e.name}(${e.start}~${e.end})`)].join('\n'));
   }

@@ -1,10 +1,14 @@
 /**
  * 3반 결강 현황 – 데이터 저장용 Google Apps Script 웹앱
  *
- * 구글 시트에 붙여서 배포한다:
- *   시트 열기 → 확장 프로그램 → Apps Script → 이 코드 붙여넣기 → 저장
- *   → 배포 → 새 배포 → 유형: 웹 앱, 실행: 나, 액세스: 모든 사용자 → 배포
- *   → 나오는 웹 앱 URL(.../exec)을 docs/index.html 의 CONFIG.API_URL 에 넣는다.
+ * 설치:
+ *   1) Apps Script 편집기에서 Code.gs 내용을 전부 이 코드로 바꾸고 저장
+ *   2) 위쪽 함수 선택에서 setup 을 골라 ▶실행 → 권한 허용 (데이터 시트가 생성되고 로그에 주소가 나옴)
+ *   3) 배포 → 배포 관리 → (기존 배포) 연필 아이콘 → 버전: "새 버전" → 배포
+ *      (새 버전으로 다시 배포해야 같은 /exec URL에 새 코드가 반영된다)
+ *   웹앱 설정: 실행 사용자 = 나, 액세스 권한 = 모든 사용자
+ *
+ * 시트에 붙인 스크립트면 그 시트를, 단독 스크립트면 setup 때 새로 만든 시트를 쓴다.
  *
  * 시트 구성(없으면 자동 생성):
  *   entries: date | name | status | reason | start | end | updatedAt
@@ -45,9 +49,31 @@ function doPost(e) {
   }
 }
 
+/* ---------- spreadsheet ---------- */
+function getSpreadsheet() {
+  const active = SpreadsheetApp.getActiveSpreadsheet();
+  if (active) return active;
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  const ss = SpreadsheetApp.create('3반 결강 현황 데이터');
+  props.setProperty('SHEET_ID', ss.getId());
+  return ss;
+}
+
+/** 편집기에서 한 번 실행: 권한 승인 + 시트 생성 */
+function setup() {
+  const ss = getSpreadsheet();
+  entriesSheet();
+  configSheet();
+  const first = ss.getSheets()[0];
+  if (ss.getSheets().length > 2 && first.getName() !== 'entries' && first.getLastRow() === 0) ss.deleteSheet(first);
+  Logger.log('데이터 시트: ' + ss.getUrl());
+}
+
 /* ---------- entries ---------- */
 function entriesSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   let sh = ss.getSheetByName('entries');
   if (!sh) {
     sh = ss.insertSheet('entries');
@@ -112,7 +138,7 @@ function removeEntry(date, name) {
 
 /* ---------- config ---------- */
 function configSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   let sh = ss.getSheetByName('config');
   if (!sh) {
     sh = ss.insertSheet('config');
