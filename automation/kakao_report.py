@@ -181,8 +181,8 @@ def build_message(date: str, kind: str, entries: list[dict], config: dict, unit:
     body = f"{report_date(d)}  <{unit}>\n" + "\n".join(f"{LETTERS[i]}. {t}" for i, t in enumerate(items))
     link = f"\n\n결강 입력: {SITE_URL}"
     if kind == "draft":
-        return f"저는 김주연 소령(봇) 입니다. 이 메세지는 매일 16시에 발송됩니다.\n내일 출근현황 종합하겠습니다!\n\n{body}\n\n의견부탁드립니다!{link}"
-    return f"{body}\n\n이상없으면 위에 현황으로 보고하겠습니다!{link}"
+        return f"저는 김주연 소령(봇) 입니다. \n이 메세지는 매일 16시에 발송됩니다.\n전날 기준 현황은 다음과 같습니다. \n\n{body}\n\n변경 사항있다면 아래 링크로 의견 부탁드립니다!{link}"
+    return f"저는 김주연 소령(봇) 입니다. \n이 메세지는 매일 07시에 발송됩니다.\n\n{body}\n\n더 이상 변경 사항이 없으면 위에 현황으로 보고하겠습니다!\n추가 변경사항은 아래의 링크에서 입력해주시기 바랍니다.{link}"
 
 
 # ---------- 전송 ----------
