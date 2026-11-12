@@ -35,13 +35,14 @@
   - 받는 방: `automation/config.json`의 `room` (창 제목과 정확히 일치). 로그: `automation/logs/report.log`.
 - Windows Python: `C:\Users\staro\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe` (`python` 명령은 Store 스텁이라 쓰지 말 것).
 - 작업 스케줄러: `KakaoReport\Draft_1600`(일~목 16:00), `KakaoReport\Final_0700`(월~금 07:00), "Interactive only". 백그라운드 실행에서도 전송되는 것 확인함 (kakao_send.ps1의 Alt 키 + SetForegroundWindow 재시도).
-- 실행 조건: PC 켜짐 + Windows 로그인 + **화면 잠금 해제 상태**(키 입력 방식이라 잠금 화면에서는 실패) + 카톡 로그인 + 받는 방 창이 열려 있을 것. 꺼져 있던 시간은 나중에 몰아서 보내지 않는다.
+- 실행 조건: PC 켜짐 + Windows 로그인 + **화면 잠금 해제 상태**(키 입력 방식이라 잠금 화면에서는 실패) + 카톡 로그인 (방 창은 닫혀 있으면 자동으로 연다). 꺼져 있던 시간은 나중에 몰아서 보내지 않는다.
 - 잠금 대책 (2026-11-12 설정): 전원·배터리 모두 30분 뒤 화면만 꺼짐, 절전·최대 절전 안 함, 깨어날 때 로그인 요구 안 함(CONSOLELOCK=0, 관리자 권한으로 변경), 화면 보호기 끔. 노트북 덮개를 닫으면 절전(LIDACTION=1)되고, Win+L로 직접 잠그면 전송 실패.
 - 2026-11-12 사용자 허락으로 받는 방을 소통방(`26-3기 소통방(교관님 미포함)`)으로 바꿨다 (초안·최종 모두). 시험은 `--room 서정원`으로 할 것.
 
 ## 스크립트
 - `kakao_send.ps1 -Title <방 제목> -TextFile <UTF-8 텍스트 파일>`: 메시지 전송
 - `kakao_read.ps1 -Title <방 제목> [-Last N]`: 대화 내용 읽기 (마지막 N줄)
+- `kakao_open.ps1 -Title <방 제목>`: 방 창이 없으면 메인 창 채팅 목록 검색으로 연다. 열린 창 제목이 정확히 일치해야 성공 (일부만 맞는 이름·없는 방은 실패). `kakao_report.py`가 전송 전에 자동 호출.
 - 실행 예 (WSL에서):
   ```bash
   powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File 'C:\Users\staro\Github\auto_kakao_message\kakao_send.ps1' -Title "서정원" -TextFile 'C:\...\msg.txt'
@@ -70,7 +71,8 @@
 - UI Automation: 카카오 자체 컨트롤이라 목록 내용을 못 읽음.
 
 ## 주의사항
-- **채팅방 창이 열려 있어야** 읽기/전송이 가능하다. 닫혀 있으면 사용자에게 열어달라고 하거나, 메인 창 검색으로 열어야 한다.
+- **채팅방 창이 열려 있어야** 읽기/전송이 가능하다. 닫혀 있으면 `kakao_open.ps1`로 연다.
+  - 방법 (2026-11-12 검증): 메인 창(`KakaoTalk`) → 자식 창 `ChatRoomListView_*` 안의 `Edit`(채팅 목록 검색칸)에 WM_SETTEXT로 방 이름 → PostMessage(WM_KEYDOWN/UP, VK_RETURN) → 방 창이 열림. 메인 창이 숨겨져(트레이) 있어도, 친구 탭이 보이는 상태여도 되고 창을 앞으로 가져오지 않는다. 끝나면 검색칸을 비운다.
 - PowerShell 스크립트는 **UTF-8 BOM**으로 저장해야 한글 문자열이 깨지지 않는다 (Windows PowerShell 5.1). 출력은 `[Console]::OutputEncoding = UTF8`.
 - 클립보드 사용 때문에 `-STA`로 실행한다.
 - 키 입력 전에 항상 포그라운드 창이 대상 방인지 확인하고, 아니면 중단한다 (다른 창으로 오전송 방지).

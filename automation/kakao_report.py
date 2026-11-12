@@ -31,6 +31,7 @@ CONFIG_PATH = HERE / "config.json"
 SKIP_PATH = HERE / "skip_dates.txt"
 LOG_PATH = HERE / "logs" / "report.log"
 SEND_PS1 = ROOT / "kakao_send.ps1"
+OPEN_PS1 = ROOT / "kakao_open.ps1"
 
 DEFAULT_REASONS = [
     {"name": "육아시간", "type": "time"},
@@ -186,20 +187,32 @@ def build_message(date: str, kind: str, entries: list[dict], config: dict, unit:
 
 
 # ---------- 전송 ----------
+def run_ps(ps1: Path, *args: str) -> tuple[int, str]:
+    flags = 0x08000000 if os.name == "nt" else 0  # CREATE_NO_WINDOW
+    r = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-File", str(ps1), *args],
+        capture_output=True, timeout=120, creationflags=flags,
+    )
+    return r.returncode, (r.stdout + r.stderr).decode("utf-8", "replace").strip()
+
+
+def open_room(room: str) -> None:
+    """방 창이 닫혀 있으면 카톡 메인 창의 채팅 목록 검색으로 연다."""
+    code, out = run_ps(OPEN_PS1, "-Title", room)
+    if code != 0 or not out.startswith(("opened", "already open")):
+        raise RuntimeError(f"방 열기 실패 (code {code}): {out}")
+    log(f"  {out.splitlines()[-1]}")
+
+
 def send(room: str, text: str) -> None:
+    open_room(room)
     fd, path = tempfile.mkstemp(prefix="kakao_msg_", suffix=".txt")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(text)
-        flags = 0x08000000 if os.name == "nt" else 0  # CREATE_NO_WINDOW
-        r = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-STA", "-ExecutionPolicy", "Bypass",
-             "-File", str(SEND_PS1), "-Title", room, "-TextFile", path],
-            capture_output=True, timeout=120, creationflags=flags,
-        )
-        out = (r.stdout + r.stderr).decode("utf-8", "replace").strip()
-        if r.returncode != 0 or "sent to" not in out:
-            raise RuntimeError(f"전송 실패 (code {r.returncode}): {out}")
+        code, out = run_ps(SEND_PS1, "-Title", room, "-TextFile", path)
+        if code != 0 or "sent to" not in out:
+            raise RuntimeError(f"전송 실패 (code {code}): {out}")
         log(f"  {out.splitlines()[-1]}")
     finally:
         try:
