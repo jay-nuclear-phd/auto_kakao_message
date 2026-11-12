@@ -1,7 +1,7 @@
 """3반 결강 현황 보고 문구를 만들어 카카오톡 방에 보낸다.
 
-Windows 작업 스케줄러에서 실행한다 (평일 16:00 초안, 07:00 최종).
-  pythonw.exe kakao_report.py --kind draft     # 다음 근무일 현황 초안
+Windows 작업 스케줄러에서 실행한다 (일~목 16:00 초안, 월~금 07:00 최종).
+  pythonw.exe kakao_report.py --kind draft     # 내일 현황 초안 (내일이 근무일일 때만)
   pythonw.exe kakao_report.py --kind final     # 오늘 현황 최종
   python.exe  kakao_report.py --kind draft --dry-run   # 보내지 않고 문구만 출력
 
@@ -73,13 +73,6 @@ def skip_dates() -> set[str]:
         if m:
             out.add(m.group(1))
     return out
-
-
-def next_weekday(d: dt.date) -> dt.date:
-    d += dt.timedelta(days=1)
-    while d.weekday() >= 5:
-        d += dt.timedelta(days=1)
-    return d
 
 
 # ---------- 시간 표현 ----------
@@ -218,10 +211,10 @@ def send(room: str, text: str) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--kind", choices=["draft", "final"], required=True)
-    ap.add_argument("--date", help="대상 날짜 YYYY-MM-DD (기본: draft=다음 근무일, final=오늘)")
+    ap.add_argument("--date", help="대상 날짜 YYYY-MM-DD (기본: draft=내일, final=오늘)")
     ap.add_argument("--room", help="config.json 의 room 대신 보낼 방")
     ap.add_argument("--dry-run", action="store_true", help="보내지 않고 문구만 출력")
-    ap.add_argument("--force", action="store_true", help="주말/건너뛸 날짜여도 실행")
+    ap.add_argument("--force", action="store_true", help="대상이 주말/건너뛸 날짜여도 실행")
     a = ap.parse_args()
 
     cfg = load_config()
@@ -229,18 +222,11 @@ def main() -> int:
     today = dt.datetime.now(KST).date()
     skips = skip_dates()
 
-    if not a.force:
-        if today.weekday() >= 5 or today.isoformat() in skips:
-            log(f"[{a.kind}] 오늘({today})은 주말/건너뛰는 날이라 보내지 않음")
-            return 0
-    if a.date:
-        target = dt.date.fromisoformat(a.date)
-    elif a.kind == "draft":
-        target = next_weekday(today)
-        while target.isoformat() in skips:
-            target = next_weekday(target)
-    else:
-        target = today
+    # draft = 내일 현황 (일~목 16시 → 월~금), final = 오늘 현황 (월~금 07시)
+    target = dt.date.fromisoformat(a.date) if a.date else today + dt.timedelta(days=1 if a.kind == "draft" else 0)
+    if not a.force and (target.weekday() >= 5 or target.isoformat() in skips):
+        log(f"[{a.kind}] 대상 {target}은 주말/건너뛰는 날이라 보내지 않음")
+        return 0
 
     try:
         entries, config = fetch(cfg["api_url"], target.isoformat())

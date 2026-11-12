@@ -27,14 +27,14 @@
 - WSL에서 `powershell.exe`로 Win32 API를 호출해 제어한다. 프로젝트 경로는 Windows에서 `C:\Users\staro\Github\auto_kakao_message`.
 - 사용자는 3반 소령 서정원. 단톡방 반장(소령 김주연)의 인원 종합 업무를 자동화하는 것이 목표.
 
-## 자동 보고 (automation/) — **현재 꺼져 있음**
-- 2026-11-10 사용자 요청으로 작업 스케줄러 작업(KakaoReport\\Draft_1600, Final_0700)을 삭제했다. 코드는 남겨둠. 사용자가 다시 원하기 전에는 등록하지 말 것.
+## 자동 보고 (automation/) — **켜져 있음** (2026-11-12 재등록)
+- 등록/재등록: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Users\staro\Github\auto_kakao_message\automation\register_tasks.ps1'` (`-Test 3` 이면 3분 뒤 초안·5분 뒤 최종을 한 번만 실행하는 Test_* 작업 등록 — 시험 뒤 지울 것). 배터리에서도 실행되게 설정.
 - `automation/kakao_report.py --kind draft|final [--dry-run] [--room 방] [--date YYYY-MM-DD] [--force]`
   - Apps Script에서 데이터를 받아 문구를 만들고 `kakao_send.ps1`로 전송. 문구 규칙은 `docs/index.html`의 `buildMessage`와 **똑같아야 한다** (한쪽을 바꾸면 다른 쪽도 바꾸고, 사이트 `?demo`에 같은 데이터를 넣어 출력 비교).
-  - draft = 다음 근무일, final = 오늘. 주말과 `skip_dates.txt`의 날짜는 보내지 않음.
+  - draft = 내일, final = 오늘. 대상 날짜가 주말이거나 `skip_dates.txt`에 있으면 보내지 않음 → 초안은 일~목, 최종은 월~금.
   - 받는 방: `automation/config.json`의 `room` (창 제목과 정확히 일치). 로그: `automation/logs/report.log`.
 - Windows Python: `C:\Users\staro\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe` (`python` 명령은 Store 스텁이라 쓰지 말 것).
-- 작업 스케줄러: `KakaoReport\Draft_1600`(평일 16:00), `KakaoReport\Final_0700`(평일 07:00), "Interactive only". 백그라운드 실행에서도 전송되는 것 확인함 (kakao_send.ps1의 Alt 키 + SetForegroundWindow 재시도).
+- 작업 스케줄러: `KakaoReport\Draft_1600`(일~목 16:00), `KakaoReport\Final_0700`(월~금 07:00), "Interactive only". 백그라운드 실행에서도 전송되는 것 확인함 (kakao_send.ps1의 Alt 키 + SetForegroundWindow 재시도).
 - 실행 조건: PC 켜짐 + Windows 로그인 + **화면 잠금 해제 상태**(키 입력 방식이라 잠금 화면에서는 실패) + 카톡 로그인 + 받는 방 창이 열려 있을 것. 꺼져 있던 시간은 나중에 몰아서 보내지 않는다.
 - 잠금 대책 (2026-11-12 설정): 전원·배터리 모두 30분 뒤 화면만 꺼짐, 절전·최대 절전 안 함, 깨어날 때 로그인 요구 안 함(CONSOLELOCK=0, 관리자 권한으로 변경), 화면 보호기 끔. 노트북 덮개를 닫으면 절전(LIDACTION=1)되고, Win+L로 직접 잠그면 전송 실패.
 - 소통방(`26-3기 소통방(교관님 미포함)`)으로 바꾸는 것은 사용자가 명시적으로 허락했을 때만.
@@ -78,7 +78,7 @@
 - **테스트는 `서정원` 방(사용자 본인 방)에서만** 한다. `26-3기 소통방(교관님 미포함)`에는 사용자가 명시적으로 허락하기 전까지 절대 전송하지 않는다.
 
 ## 인원 종합 업무 사양
-- 평일 매일 16:00 — 다음 날 현황 초안 전송:
+- 일~목 16:00 — 다음 날 현황 초안 전송 (금요일에는 보내지 않고 일요일에 월요일 것을 보냄):
   ```
   저는 김주연 소령(봇) 입니다. 이 메세지는 매일 16시에 발송됩니다.
   내일 출근현황 종합하겠습니다!
