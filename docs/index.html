@@ -142,10 +142,11 @@ pre.msg {
 
 /* 주간 히트맵 */
 .hmwrap { overflow-x: auto; margin-top: 12px; -webkit-overflow-scrolling: touch; }
-table.hm { border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+table.hm { width: 100%; border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
 table.hm th { font-weight: 600; color: var(--text-secondary); padding: 2px; }
 table.hm th.nm, table.hm td.nm { position: sticky; left: 0; background: var(--card); text-align: left; white-space: nowrap; padding-right: 6px; z-index: 1; font-weight: 500; color: var(--text-primary); }
-table.hm td.c { width: 40px; min-width: 40px; height: 32px; text-align: center; border-radius: 4px; background: var(--track); padding: 0; }
+table.hm td.c { min-width: 40px; height: 32px; text-align: center; border-radius: 4px; background: var(--track); padding: 0; }
+table.hm th.nm, table.hm td.nm, table.hm td.tot { width: 1%; }
 table.hm td.tot { padding: 0 4px 0 6px; text-align: right; font-weight: 700; white-space: nowrap; }
 table.hm td.c[data-tip] { cursor: pointer; }
 
@@ -618,25 +619,19 @@ const firstStart = (e) => (parseRanges(e.times)[0] || [''])[0];
 const byTimeName = (a, b) => firstStart(a).localeCompare(firstStart(b)) || a.name.localeCompare(b.name, 'ko');
 function buildMessage(date, kind) {
   const absent = entriesOn(date).filter((e) => e.status === 'absent');
-  const leave = absent.filter(isLeave).sort(byTimeName);
+  const leaveN = absent.filter(isLeave).length;  // 출근에서 빼는 사람은 종일 휴가자만
   const groups = new Map((kind === 'draft' ? DRAFT_ALWAYS : []).map((n) => [n, []]));
-  absent.filter((e) => !isLeave(e)).forEach((e) => {
+  absent.forEach((e) => {
     if (!groups.has(e.reason)) groups.set(e.reason, []);
     groups.get(e.reason).push(e);
   });
-  const rank = (n) => { const i = ITEM_ORDER.indexOf(n); return i < 0 ? 99 : i; };
+  // 휴가 유형(반일 포함)을 먼저, 그다음 시간 사용 항목
+  const rank = (n) => { const i = ITEM_ORDER.indexOf(n); return (reasonType(n) === 'leave' ? 0 : 100) + (i < 0 ? 99 : i); };
   const ordered = [...groups].sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0], 'ko'));
 
   const total = S.total;
   const items = [];
-  items.push(`출근현황 : 총원 ${total}명, ${leave.length ? `휴가 ${leave.length}명, ` : ''}출근 ${total - leave.length}명`);
-  if (leave.length) {
-    const cnt = new Map();
-    leave.forEach((e) => cnt.set(e.reason, (cnt.get(e.reason) || 0) + 1));
-    const rtxt = cnt.size === 1 ? [...cnt.keys()][0] : [...cnt].map(([r, n]) => `${r} ${n}`).join(', ');
-    const multi = cnt.size > 1;
-    items.push([`휴가 : ${leave.length}명(${rtxt})`, ...leave.map((e) => ` * ${e.name}(${multi ? e.reason + ' ' : ''}${dispTimes(e.times)})`)].join('\n'));
-  }
+  items.push(`출근현황 : 총원 ${total}명, ${leaveN ? `휴가 ${leaveN}명, ` : ''}출근 ${total - leaveN}명`);
   for (const [r, list] of ordered) {
     list.sort(byTimeName);
     items.push([`${r} : ${list.length}명`, ...list.map((e) => ` * ${e.name}(${dispTimes(e.times)})`)].join('\n'));

@@ -170,24 +170,15 @@ def build_message(date: str, kind: str, entries: list[dict], config: dict, unit:
     key = lambda e: (first_start(e), e["name"])  # noqa: E731
     absent = [e for e in entries if e["date"] == date and e["status"] == "absent"]
     is_leave = lambda e: rtype(e["reason"]) == "leave" and is_full_day(e["times"])  # noqa: E731
-    leave = sorted([e for e in absent if is_leave(e)], key=key)
+    leave_n = sum(1 for e in absent if is_leave(e))  # 출근에서 빼는 사람은 종일 휴가자만
     groups: dict[str, list] = {n: [] for n in (DRAFT_ALWAYS if kind == "draft" else [])}
     for e in absent:
-        if not is_leave(e):
-            groups.setdefault(e["reason"], []).append(e)
-    rank = lambda n: ITEM_ORDER.index(n) if n in ITEM_ORDER else 99  # noqa: E731
+        groups.setdefault(e["reason"], []).append(e)
+    # 휴가 유형(반일 포함)을 먼저, 그다음 시간 사용 항목
+    rank = lambda n: (0 if rtype(n) == "leave" else 100) + (ITEM_ORDER.index(n) if n in ITEM_ORDER else 99)  # noqa: E731
     ordered = sorted(groups.items(), key=lambda kv: (rank(kv[0]), kv[0]))
 
-    items = [f"출근현황 : 총원 {total}명, {f'휴가 {len(leave)}명, ' if leave else ''}출근 {total - len(leave)}명"]
-    if leave:
-        cnt: dict[str, int] = {}
-        for e in leave:
-            cnt[e["reason"]] = cnt.get(e["reason"], 0) + 1
-        multi = len(cnt) > 1
-        rtxt = next(iter(cnt)) if not multi else ", ".join(f"{r} {n}" for r, n in cnt.items())
-        lines = [f"휴가 : {len(leave)}명({rtxt})"]
-        lines += [f" * {e['name']}({e['reason'] + ' ' if multi else ''}{disp_times(e['times'])})" for e in leave]
-        items.append("\n".join(lines))
+    items = [f"출근현황 : 총원 {total}명, {f'휴가 {leave_n}명, ' if leave_n else ''}출근 {total - leave_n}명"]
     for r, lst in ordered:
         lst.sort(key=key)
         items.append("\n".join([f"{r} : {len(lst)}명"] + [f" * {e['name']}({disp_times(e['times'])})" for e in lst]))
