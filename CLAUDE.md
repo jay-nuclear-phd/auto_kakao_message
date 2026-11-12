@@ -36,6 +36,7 @@
 - Windows Python: `C:\Users\staro\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe` (`python` 명령은 Store 스텁이라 쓰지 말 것).
 - 작업 스케줄러: `KakaoReport\Draft_1600`(평일 16:00), `KakaoReport\Final_0700`(평일 07:00), "Interactive only". 백그라운드 실행에서도 전송되는 것 확인함 (kakao_send.ps1의 Alt 키 + SetForegroundWindow 재시도).
 - 실행 조건: PC 켜짐 + Windows 로그인 + **화면 잠금 해제 상태**(키 입력 방식이라 잠금 화면에서는 실패) + 카톡 로그인 + 받는 방 창이 열려 있을 것. 꺼져 있던 시간은 나중에 몰아서 보내지 않는다.
+- 잠금 대책 (2026-11-12 설정): 전원·배터리 모두 30분 뒤 화면만 꺼짐, 절전·최대 절전 안 함, 깨어날 때 로그인 요구 안 함(CONSOLELOCK=0, 관리자 권한으로 변경), 화면 보호기 끔. 노트북 덮개를 닫으면 절전(LIDACTION=1)되고, Win+L로 직접 잠그면 전송 실패.
 - 소통방(`26-3기 소통방(교관님 미포함)`)으로 바꾸는 것은 사용자가 명시적으로 허락했을 때만.
 
 ## 스크립트
