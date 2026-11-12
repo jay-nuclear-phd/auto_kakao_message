@@ -333,7 +333,18 @@ function parseRanges(times) {
 }
 const normTimes = (times) => parseRanges(times).map(([a, b]) => `${a}~${b}`).join(',');
 const dispTimes = (times) => parseRanges(times).map(([a, b]) => `${a}~${b}`).join(', ');
-const hoursOf = (e) => e.status === 'absent' ? parseRanges(e.times).reduce((h, [a, b]) => h + (toMin(b) - toMin(a)) / 60, 0) : 0;
+// 점심시간(12:00~13:00)은 결강 시간에서 뺀다 → 08:30~17:30 은 8시간
+const LUNCH = [12 * 60, 13 * 60];
+const WORK = [8 * 60 + 30, 17 * 60 + 30];
+const overlap = (a, b, [c, d]) => Math.max(0, Math.min(b, d) - Math.max(a, c));
+const minsOf = (e, within) => parseRanges(e.times).reduce((m, [a, b]) => {
+  let s = toMin(a), t = toMin(b);
+  if (within) { s = Math.max(s, within[0]); t = Math.min(t, within[1]); if (t <= s) return m; }
+  return m + (t - s) - overlap(s, t, LUNCH);
+}, 0);
+const hoursOf = (e) => e.status === 'absent' ? minsOf(e) / 60 : 0;
+// 08:30~17:30 (점심 제외 8시간) 을 모두 덮어야 하루 전체
+const isFullDay = (e) => minsOf(e, WORK) >= WORK[1] - WORK[0] - (LUNCH[1] - LUNCH[0]);
 function slotsToTimes(slots) {
   const idx = [...slots].sort((a, b) => a - b);
   const out = [];
@@ -476,6 +487,8 @@ function entriesBetween(from, to) {
   return out;
 }
 const reasonType = (name) => (S.reasons.find((r) => r.name === name) || { type: 'time' }).type;
+// 출근에서 빼는 휴가: 휴가 유형 + 하루 전체. 반일 휴가는 시간 사용처럼 사유별 항목으로 표시
+const isLeave = (e) => reasonType(e.reason) === 'leave' && isFullDay(e);
 
 /* ================= 입력 폼 ================= */
 function renderDateNav() {
@@ -605,9 +618,9 @@ const firstStart = (e) => (parseRanges(e.times)[0] || [''])[0];
 const byTimeName = (a, b) => firstStart(a).localeCompare(firstStart(b)) || a.name.localeCompare(b.name, 'ko');
 function buildMessage(date, kind) {
   const absent = entriesOn(date).filter((e) => e.status === 'absent');
-  const leave = absent.filter((e) => reasonType(e.reason) === 'leave').sort(byTimeName);
+  const leave = absent.filter(isLeave).sort(byTimeName);
   const groups = new Map((kind === 'draft' ? DRAFT_ALWAYS : []).map((n) => [n, []]));
-  absent.filter((e) => reasonType(e.reason) !== 'leave').forEach((e) => {
+  absent.filter((e) => !isLeave(e)).forEach((e) => {
     if (!groups.has(e.reason)) groups.set(e.reason, []);
     groups.get(e.reason).push(e);
   });
@@ -631,7 +644,7 @@ function buildMessage(date, kind) {
   items.push('건강상태 : 이상무');
   const body = `${reportDate(date)}  <${CONFIG.UNIT}>\n` + items.map((t, i) => `${LETTERS[i]}. ${t}`).join('\n');
   const link = `\n\n결강 입력: ${CONFIG.SITE_URL}`;
-  if (kind === 'draft') return `내일 출근현황 종합하겠습니다!\n\n${body}\n\n의견부탁드립니다!${link}`;
+  if (kind === 'draft') return `저는 김주연 소령(봇) 입니다. 이 메세지는 매일 16시에 발송됩니다.\n내일 출근현황 종합하겠습니다!\n\n${body}\n\n의견부탁드립니다!${link}`;
   return `${body}\n\n이상없으면 위에 현황으로 보고하겠습니다!${link}`;
 }
 function autoKind(date) { return date > todayStr() ? 'draft' : 'final'; }
@@ -641,7 +654,7 @@ function renderMessage() {
   $('copyDate').textContent = `· ${shortDate(S.target)}`;
   $('msg').textContent = buildMessage(S.target, kind);
   const absent = entriesOn(S.target).filter((e) => e.status === 'absent');
-  const leaveN = absent.filter((e) => reasonType(e.reason) === 'leave').length;
+  const leaveN = absent.filter(isLeave).length;
   $('stats').innerHTML = [
     [absent.length, '결강'],
     [leaveN, '휴가'],
@@ -703,7 +716,7 @@ function renderDash() {
       <div class="stats" style="margin-top:12px">
         <div class="stat"><div class="v">${entries.length}</div><div class="k">결강 인원</div></div>
         <div class="stat"><div class="v">${fmtH(total)}</div><div class="k">총 결강 시간</div></div>
-        <div class="stat"><div class="v">${entries.filter((e) => reasonType(e.reason) === 'leave').length}</div><div class="k">휴가</div></div>
+        <div class="stat"><div class="v">${entries.filter(isLeave).length}</div><div class="k">휴가</div></div>
       </div>
       <div class="tl">
         ${entries.map((e) => {

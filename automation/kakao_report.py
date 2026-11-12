@@ -100,6 +100,32 @@ def parse_ranges(times: str) -> list[tuple[str, str]]:
     return out
 
 
+LUNCH = (12 * 60, 13 * 60)  # 점심시간은 결강 시간에서 뺀다
+WORK = (8 * 60 + 30, 17 * 60 + 30)
+
+
+def to_min(t: str) -> int:
+    h, m = t.split(":")
+    return int(h) * 60 + int(m)
+
+
+def mins_of(times: str, within: tuple[int, int] | None = None) -> int:
+    total = 0
+    for a, b in parse_ranges(times):
+        s, t = to_min(a), to_min(b)
+        if within:
+            s, t = max(s, within[0]), min(t, within[1])
+            if t <= s:
+                continue
+        total += (t - s) - max(0, min(t, LUNCH[1]) - max(s, LUNCH[0]))
+    return total
+
+
+def is_full_day(times: str) -> bool:
+    """08:30~17:30 (점심 제외 8시간)을 모두 덮으면 하루 전체 휴가."""
+    return mins_of(times, WORK) >= (WORK[1] - WORK[0]) - (LUNCH[1] - LUNCH[0])
+
+
 def disp_times(times: str) -> str:
     return ", ".join(f"{a}~{b}" for a, b in parse_ranges(times))
 
@@ -143,10 +169,11 @@ def build_message(date: str, kind: str, entries: list[dict], config: dict, unit:
 
     key = lambda e: (first_start(e), e["name"])  # noqa: E731
     absent = [e for e in entries if e["date"] == date and e["status"] == "absent"]
-    leave = sorted([e for e in absent if rtype(e["reason"]) == "leave"], key=key)
+    is_leave = lambda e: rtype(e["reason"]) == "leave" and is_full_day(e["times"])  # noqa: E731
+    leave = sorted([e for e in absent if is_leave(e)], key=key)
     groups: dict[str, list] = {n: [] for n in (DRAFT_ALWAYS if kind == "draft" else [])}
     for e in absent:
-        if rtype(e["reason"]) != "leave":
+        if not is_leave(e):
             groups.setdefault(e["reason"], []).append(e)
     rank = lambda n: ITEM_ORDER.index(n) if n in ITEM_ORDER else 99  # noqa: E731
     ordered = sorted(groups.items(), key=lambda kv: (rank(kv[0]), kv[0]))
@@ -170,7 +197,7 @@ def build_message(date: str, kind: str, entries: list[dict], config: dict, unit:
     body = f"{report_date(d)}  <{unit}>\n" + "\n".join(f"{LETTERS[i]}. {t}" for i, t in enumerate(items))
     link = f"\n\n결강 입력: {SITE_URL}"
     if kind == "draft":
-        return f"내일 출근현황 종합하겠습니다!\n\n{body}\n\n의견부탁드립니다!{link}"
+        return f"저는 김주연 소령(봇) 입니다. 이 메세지는 매일 16시에 발송됩니다.\n내일 출근현황 종합하겠습니다!\n\n{body}\n\n의견부탁드립니다!{link}"
     return f"{body}\n\n이상없으면 위에 현황으로 보고하겠습니다!{link}"
 
 
