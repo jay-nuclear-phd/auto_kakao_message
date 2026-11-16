@@ -44,6 +44,7 @@ LETTERS = "가나다라마바사아자차카타파하"
 WD = ["월", "화", "수", "목", "금", "토", "일"]  # date.weekday() 순서
 KST = dt.timezone(dt.timedelta(hours=9))
 SITE_URL = "https://jay-nuclear-phd.github.io/auto_kakao_message/"
+QUOTES_PATH = ROOT / "docs" / "quotes.json"  # 사이트와 같은 파일을 쓴다
 
 
 def log(msg: str) -> None:
@@ -151,6 +152,19 @@ def report_date(d: dt.date) -> str:
     return f"'{d.year % 100:02d}.{d.month}.{d.day}.({WD[d.weekday()]})"
 
 
+def quote_line(date: str, kind: str) -> str:
+    """날짜·종류로 정해지는 오늘의 한마디 (초안 → 최종 → 다음 초안 순으로 다음 문장)."""
+    try:
+        quotes = json.loads(QUOTES_PATH.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return ""
+    if not quotes:
+        return ""
+    n = (dt.date.fromisoformat(date) - dt.date(1970, 1, 1)).days
+    text, who = quotes[(2 * n + (1 if kind == "final" else 0)) % len(quotes)]
+    return f'\n\n오늘의 한마디: "{text}" - {who}'
+
+
 def build_message(date: str, kind: str, entries: list[dict], config: dict, unit: str) -> str:
     extra = [r for r in (config.get("reasons") or []) if not any(d["name"] == r.get("name") for d in DEFAULT_REASONS)]
     reasons = DEFAULT_REASONS + extra
@@ -180,7 +194,7 @@ def build_message(date: str, kind: str, entries: list[dict], config: dict, unit:
 
     d = dt.date.fromisoformat(date)
     body = f"{report_date(d)}  <{unit}>\n" + "\n".join(f"{LETTERS[i]}. {t}" for i, t in enumerate(items))
-    link = f"\n\n결강 입력: {SITE_URL}"
+    link = quote_line(date, kind) + f"\n\n결강 입력: {SITE_URL}"
     if kind == "draft":
         return f"저는 김주연 소령(봇) 입니다. \n이 메세지는 매일 16시에 발송됩니다.\n전날 기준 현황은 다음과 같습니다. \n\n{body}\n\n변경 사항있다면 아래 링크로 의견 부탁드립니다!{link}"
     return f"저는 김주연 소령(봇) 입니다. \n이 메세지는 매일 07시에 발송됩니다.\n\n{body}\n\n더 이상 변경 사항이 없으면 위에 현황으로 보고하겠습니다!\n추가 변경사항은 아래의 링크에서 입력해주시기 바랍니다.{link}"

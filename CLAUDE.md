@@ -19,6 +19,8 @@
 - 결강 시간 계산에서 점심시간 12:00~13:00은 뺀다 (08:30~17:30 = 8시간).
 - 0명인 항목은 문구에서 뺀다. 예외: 초안(16시)에는 육아시간만 0명이어도 표시.
 - `apps_script/Code.gs`: 구글 시트에 붙여 웹앱으로 배포하는 저장 API. GET `?action=list&from&to`, POST(text/plain JSON) `login/upsert/remove/addReason/setTotal` (+`auth:{id,pw}`). 시트 열: date|name|status|reason|times|updatedAt, times 예 `08:00~08:30,15:30~17:30`. 값 앞에 `'`를 붙여 텍스트로 저장. Code.gs를 바꾸면 사용자가 붙여넣고 **새 버전으로 재배포**해야 반영된다 — 서버 형식이 바뀌는 변경은 재배포 확인 후 사이트를 푸시할 것.
+- **이전 입력 자동 복사** (Code.gs `carryForward`, 2026-11-16): `list` 요청 때 조사 날짜가 새로 열렸으면 한 번 복사. 화~목 ← 전날, 월 ← 지난 목요일, 금 ← 지난주 금요일. 휴가 유형(청원휴가 등)은 복사 안 함, 이미 입력한 사람은 건너뜀. 복사한 날짜는 config `carried`에 기록(지운 입력이 되살아나지 않게).
+- **오늘의 한마디**: `docs/quotes.json`([문장, 말한 사람])을 사이트와 kakao_report.py가 같이 쓴다. 고르는 규칙: `(2*날짜일수 + (final?1:0)) % 개수` → 초안·최종 문구 끝(사이트 주소 앞)에 `오늘의 한마디: "…" - 누구`.
 - 미리보기: 사이트 주소에 `?demo`를 붙이면 서버 대신 기기에만 저장.
 - 로컬 미리보기: `cd docs && python3 -m http.server 8765` 후 Playwright로 390x844 확인.
 

@@ -14,6 +14,10 @@
  * 규칙:
  *   - 누구나: 지금 조사 중인 날짜(정오 전=오늘, 정오 후=다음 평일, 한국 시간)에 자기 입력 저장/삭제
  *   - 관리자만: 다른 날짜 저장/삭제, 총원 변경
+ *   - 자동 복사: 조사 날짜가 새로 열리면(누가 목록을 불러올 때) 원본 날짜의 입력을 한 번 복사한다.
+ *       화~목 ← 전날, 월 ← 지난 목요일, 금 ← 지난주 금요일. 휴가 유형(청원휴가 등)은 복사하지 않는다.
+ *       그 날짜에 이미 입력한 사람은 건너뛴다. 복사한 날짜는 config 의 carried 에 기록해 다시 복사하지 않는다
+ *       (복사된 입력을 지워도 되살아나지 않음).
  *
  * 시트 구성(없으면 자동 생성):
  *   entries: date | name | status | reason | times | updatedAt
@@ -28,6 +32,7 @@ function doGet(e) {
   try {
     const p = e.parameter || {};
     if (p.action === 'list') {
+      carryForward();
       return json({ ok: true, entries: listEntries(p.from, p.to), config: getConfig() });
     }
     return json({ ok: true, config: getConfig() });
@@ -95,6 +100,45 @@ function surveyDate(d) {
 function requireOpenOrAdmin(date, auth) {
   if (openDates().indexOf(date) >= 0) return;
   if (!isAdmin(auth)) throw new Error('조사 중인 날짜가 아니라서 관리자 로그인이 필요합니다');
+}
+
+/* ---------- 이전 입력 자동 복사 ---------- */
+const DEFAULT_LEAVE = ['청원휴가'];
+
+// 복사해 올 원본 날짜: 화~목 ← 전날, 월 ← 지난 목요일(4일 전), 금 ← 지난주 금요일(7일 전)
+function carrySource(date) {
+  const p = date.split('-').map(Number);
+  const d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+  const back = { 1: 4, 2: 1, 3: 1, 4: 1, 5: 7 }[d.getUTCDay()];
+  if (!back) return null;
+  d.setUTCDate(d.getUTCDate() - back);
+  return Utilities.formatDate(d, 'UTC', 'yyyy-MM-dd');
+}
+
+function carryForward() {
+  const target = surveyDate(new Date());
+  const done = configValue('carried');
+  if (done && done >= target) return;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    if ((configValue('carried') || '') >= target) return; // 기다리는 사이 다른 요청이 복사함
+    const source = carrySource(target);
+    const leave = DEFAULT_LEAVE.concat(getConfig().reasons
+      .filter(function (r) { return r.type === 'leave'; }).map(function (r) { return r.name; }));
+    const sh = entriesSheet();
+    const all = readAll(sh);
+    const have = {};
+    all.forEach(function (e) { if (e.date === target) have[e.name] = true; });
+    const now = new Date().toISOString();
+    const rows = all
+      .filter(function (e) { return e.date === source && e.status === 'absent' && leave.indexOf(e.reason) < 0 && !have[e.name]; })
+      .map(function (e) { return ["'" + target, e.name, e.status, e.reason, "'" + e.times, now]; });
+    if (rows.length) sh.getRange(sh.getLastRow() + 1, 1, rows.length, ENTRY_COLS.length).setValues(rows);
+    setConfig('carried', "'" + target);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /* ---------- spreadsheet ---------- */
@@ -195,6 +239,12 @@ function getConfig() {
   let reasons = [];
   try { reasons = JSON.parse(cfg.reasons || '[]'); } catch (e) {}
   return { reasons: reasons, total: Number(cfg.total) || 45 };
+}
+
+function configValue(key) {
+  const rows = configSheet().getDataRange().getDisplayValues();
+  for (let i = 1; i < rows.length; i++) if (rows[i][0] === key) return rows[i][1];
+  return '';
 }
 
 function setConfig(key, value) {

@@ -617,6 +617,15 @@ async function setTarget(t) {
 const LETTERS = '가나다라마바사아자차카타파하';
 const firstStart = (e) => (parseRanges(e.times)[0] || [''])[0];
 const byTimeName = (a, b) => firstStart(a).localeCompare(firstStart(b)) || a.name.localeCompare(b.name, 'ko');
+// 오늘의 한마디 (quotes.json, 자동 발송과 같은 규칙: 초안 → 최종 → 다음 초안 순으로 다음 문장)
+let QUOTES = [];
+function quoteLine(date, kind) {
+  if (!QUOTES.length) return '';
+  const [y, m, d] = date.split('-').map(Number);
+  const n = Math.round(Date.UTC(y, m - 1, d) / 86400000);
+  const [text, who] = QUOTES[(2 * n + (kind === 'final' ? 1 : 0)) % QUOTES.length];
+  return `\n\n오늘의 한마디: "${text}" - ${who}`;
+}
 function buildMessage(date, kind) {
   const absent = entriesOn(date).filter((e) => e.status === 'absent');
   const leaveN = absent.filter(isLeave).length;  // 출근에서 빼는 사람은 종일 휴가자만
@@ -638,7 +647,7 @@ function buildMessage(date, kind) {
   }
   items.push('건강상태 : 이상무');
   const body = `${reportDate(date)}  <${CONFIG.UNIT}>\n` + items.map((t, i) => `${LETTERS[i]}. ${t}`).join('\n');
-  const link = `\n\n결강 입력: ${CONFIG.SITE_URL}`;
+  const link = quoteLine(date, kind) + `\n\n결강 입력: ${CONFIG.SITE_URL}`;
   if (kind === 'draft') return `저는 김주연 소령(봇) 입니다. \n이 메세지는 매일 16시에 발송됩니다.\n전날 기준 현황은 다음과 같습니다. \n\n${body}\n\n변경 사항있다면 아래 링크로 의견 부탁드립니다!${link}`;
   return `저는 김주연 소령(봇) 입니다. \n이 메세지는 매일 07시에 발송됩니다.\n\n${body}\n\n더 이상 변경 사항이 없으면 위에 현황으로 보고하겠습니다!\n추가 변경사항은 아래의 링크에서 입력해주시기 바랍니다.${link}`;
 }
@@ -951,6 +960,7 @@ setInterval(() => {
   if (prefs.name) $('name').value = prefs.name;
   renderPresets(); renderLegend();
   renderDateNav(); renderLock();
+  fetch('quotes.json').then((r) => r.json()).then((q) => { QUOTES = q; renderMessage(); }).catch(() => {});
   try { await ensureMonths([monthKey(S.target), ...dashMonths()]); }
   catch (err) { toast('toast', `불러오기 실패: ${err.message}`, true); }
   loadFormForTarget();
